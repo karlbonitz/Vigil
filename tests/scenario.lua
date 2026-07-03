@@ -183,9 +183,11 @@ local uf2 = H.units.nameplate2.plate.UnitFrame
 local hb1 = uf1.healthBar
 
 hb1:SetValue(80)              -- health going UP never bites
-hb1:SetValue(55)              -- health lost -> a bite spawns and fades
+hb1:SetValue(55)              -- health lost -> a bite spawns
+hb1:SetValue(40)              -- rapid second hit -> coalesces into the same bite
+ok(uf1.__vigilBite ~= nil and uf1.__vigilBiteTex:IsShown(), "bite live and coalesced")
 H.Advance(0.6)
-ok(#uf1.__vigilBitePool >= 1, "damage bite spawned, faded, and was pooled")
+ok(uf1.__vigilBite == nil and not uf1.__vigilBiteTex:IsShown(), "bite faded and retired")
 
 ok(uf1.__vigilExec and uf1.__vigilExec:IsShown(), "execute tick shown")
 ok(uf1.__vigilExec.__vg > 0.9, "execute tick quiet above 20%")
@@ -226,7 +228,7 @@ H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
 ok(b2.__vr == 0 and b2.__vg == 0, "border clears when the mob leaves you")
 bc = uf2.healthBar.__barcolor
-ok(bc and bc[1] < 0.6 and bc[1] > 0.4, "tank's mob -> calm brick BAR")
+ok(bc and bc[1] > 0.55 and bc[1] < 0.75, "tank's mob -> calm rust BAR")
 H.units.nameplate2.inCombat = false
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)

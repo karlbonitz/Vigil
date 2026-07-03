@@ -102,7 +102,7 @@ biteDriver:SetScript("OnUpdate", function(_, elapsed)
         b.t = b.t - elapsed
         if b.t <= 0 then
             b.tex:Hide()
-            b.pool[#b.pool + 1] = b.tex
+            b.uf.__vigilBite = nil
             table.remove(bites, i)
         else
             b.tex:SetAlpha((b.t / BITE_TIME) * 0.7)
@@ -111,39 +111,55 @@ biteDriver:SetScript("OnUpdate", function(_, elapsed)
     if #bites == 0 then biteDriver:Hide() end
 end)
 
+local function positionBite(uf, b)
+    local hb = uf.healthBar
+    b.tex:ClearAllPoints()
+    b.tex:SetPoint("TOPLEFT", hb, "TOPLEFT", b.x1, 0)
+    b.tex:SetPoint("BOTTOMLEFT", hb, "BOTTOMLEFT", b.x1, 0)
+    b.tex:SetWidth(math.max(1, b.x2 - b.x1))
+end
+
+-- ONE bite per bar: rapid hits extend the live sliver instead of stacking
+-- overlapping flashes (which read as graphical glitches during a burn phase)
 local function spawnBite(uf, fromV, toV, max)
     local hb = uf.healthBar
     local w = hb:GetWidth()
     if not w or w <= 0 or not max or max <= 0 then return end
-    local x1 = (toV / max) * w
-    local width = ((fromV - toV) / max) * w
-    if width < 1 then return end
-    local pool = uf.__vigilBitePool
-    local tex = table.remove(pool)
-    if not tex then
-        tex = hb:CreateTexture(nil, "OVERLAY", nil, 2)
-        tex:SetTexture(Vigil.WHITE)
+    local x1 = math.max(0, (toV / max) * w)
+    local x2 = math.min(w, (fromV / max) * w)
+    if x2 - x1 < 1 then return end
+
+    local b = uf.__vigilBite
+    if b then
+        b.x1 = math.min(b.x1, x1)
+        b.x2 = math.max(b.x2, x2)
+        b.t = BITE_TIME
+    else
+        local tex = uf.__vigilBiteTex
+        if not tex then
+            tex = hb:CreateTexture(nil, "OVERLAY", nil, 2)
+            tex:SetTexture(Vigil.WHITE)
+            tex:SetVertexColor(1, 0.9, 0.75)
+            uf.__vigilBiteTex = tex
+        end
+        b = { uf = uf, tex = tex, x1 = x1, x2 = x2, t = BITE_TIME }
+        uf.__vigilBite = b
+        bites[#bites + 1] = b
     end
-    tex:ClearAllPoints()
-    tex:SetPoint("TOPLEFT", hb, "TOPLEFT", x1, 0)
-    tex:SetPoint("BOTTOMLEFT", hb, "BOTTOMLEFT", x1, 0)
-    tex:SetWidth(math.min(width, w - x1))
-    tex:SetVertexColor(1, 0.9, 0.75)
-    tex:SetAlpha(0.7)
-    tex:Show()
-    bites[#bites + 1] = { tex = tex, t = BITE_TIME, pool = pool, uf = uf }
+    b.tex:SetAlpha(0.7)
+    positionBite(uf, b)
+    b.tex:Show()
     biteDriver:Show()
 end
 
--- retire any in-flight bites on a frame (it's being recycled for a new unit)
+-- retire the in-flight bite on a frame (it's being recycled for a new unit)
 local function purgeBites(uf)
+    local b = uf.__vigilBite
+    if not b then return end
+    b.tex:Hide()
+    uf.__vigilBite = nil
     for i = #bites, 1, -1 do
-        local b = bites[i]
-        if b.uf == uf then
-            b.tex:Hide()
-            b.pool[#b.pool + 1] = b.tex
-            table.remove(bites, i)
-        end
+        if bites[i] == b then table.remove(bites, i); break end
     end
 end
 
@@ -163,9 +179,11 @@ local function updateExec(uf)
     if not max or max <= 0 then ex:Hide(); return end
     ex:Show()
     if v / max <= EXEC_PCT then
-        ex:SetVertexColor(1, 0.35, 0.30, 0.95) -- in execute range: lit
+        ex:SetWidth(2)
+        ex:SetVertexColor(1, 0.35, 0.30, 0.95) -- in execute range: a lit marker
     else
-        ex:SetVertexColor(1, 1, 1, 0.22)       -- waiting: a quiet tick
+        ex:SetWidth(1)
+        ex:SetVertexColor(1, 1, 1, 0.14)       -- waiting: barely-there
     end
 end
 
@@ -355,9 +373,6 @@ local function build(uf)
     hov:SetVertexColor(1, 1, 1, 0.12)
     hov:Hide()
     uf.__vigilHover = hov
-
-    -- bite-texture pool (see spawnBite)
-    uf.__vigilBitePool = {}
 
     -- keep text/exec/bites live as the bar moves (HookScript = taint-safe)
     hb:HookScript("OnValueChanged", function() onHealthChanged(uf) end)
