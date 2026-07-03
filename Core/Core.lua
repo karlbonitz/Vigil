@@ -182,6 +182,8 @@ SlashCmdList["VIGIL"] = function(msg)
         if Vigil.Parse then Vigil.Parse:Summary() end
     elseif cmd == "export" then
         if Vigil.ParseExport then Vigil.ParseExport:Toggle() end
+    elseif cmd == "plate" then
+        if Vigil.Inspect then Vigil.Inspect:InspectTarget() end
     elseif cmd == "debug" then
         toggle("debug", "Debug")
     elseif cmd == "help" then

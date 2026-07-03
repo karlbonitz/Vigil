@@ -1,6 +1,22 @@
 # Changelog
 
 ## v0.7.0 — the stellar pass
+
+Late fixes folded into this release (from in-game feedback):
+- **Blizzard's stock plate art no longer shows through the skin.** The
+  classic-line client decorates plates with far more than retail — a rounded
+  gold/red aggro glow, a level number right of the bar, elite/skull art, and
+  a bar border — and the skin previously hid only the retail paths. All of
+  them are now suppressed while the skin owns the plate (alpha-based, so
+  Blizzard's own re-Shows can't fight back) and restored when it's toggled
+  off. This is the "plates look like stock Blizzard frames with a gold
+  outline and a duplicate level" bug.
+- Blizzard's own plate **cast bar** suppression now tolerates both `CastBar`
+  and `castBar` frame spellings across client builds (the double cast bar
+  seen behind Vigil's).
+- New developer tool: **`/vigil plate`** dumps your target's real nameplate
+  frame tree (every child, region, texture and key) into a copy-paste
+  window — ground truth from the live client, no more guessing frame paths.
 A visual polish round aimed squarely at the best-in-class nameplate addons:
 bars that react, plates that respond to you, and a theme system — all still
 purely additive decoration on Blizzard's plates (no taint, no replacement).

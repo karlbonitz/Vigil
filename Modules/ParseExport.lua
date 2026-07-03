@@ -96,7 +96,8 @@ local function build()
 
     local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
-    hint:SetText("Press |cffffd100Ctrl+C|r to copy (text is pre-selected), then paste it into the report page: |cffffd100karlbonitz.github.io/Vigil|r")
+    frame.title = title
+    frame.hint = hint
 
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -2, -2)
@@ -123,19 +124,28 @@ local function build()
     frame:Hide()
 end
 
-function M:Toggle()
-    if frame and frame:IsShown() then
-        frame:Hide()
-        return
-    end
+-- Generic copy-paste window: any module can surface a blob of text for the
+-- user to Ctrl+C (the plate inspector uses this too).
+function M:ShowText(payload, title, hint)
     if not frame then build() end
-    local payload = self:BuildExport()
+    frame.title:SetText(title or "Vigil")
+    frame.hint:SetText(hint or "Press |cffffd100Ctrl+C|r to copy (text is pre-selected).")
     local eb = frame.editBox
     eb.payload = payload
     eb:SetText(payload)
     frame:Show()
     eb:SetFocus()
     eb:HighlightText()
+end
+
+function M:Toggle()
+    if frame and frame:IsShown() then
+        frame:Hide()
+        return
+    end
+    local payload = self:BuildExport()
+    self:ShowText(payload, "Vigil Parse — session export",
+        "Press |cffffd100Ctrl+C|r to copy (text is pre-selected), then paste it into the report page: |cffffd100karlbonitz.github.io/Vigil|r")
     Vigil:Print(("Export ready: %.1f KB. Ctrl+C, then paste into the report page: karlbonitz.github.io/Vigil")
         :format(#payload / 1024))
 end

@@ -32,6 +32,11 @@ local function unitOf(uf)
     return uf.__vigilUnit or uf.unit
 end
 
+-- Blizzard's plate cast bar, whatever this client calls it.
+local function blizzCastBar(uf)
+    return uf.CastBar or uf.castBar
+end
+
 local function active()
     return Vigil.db.enabled and Vigil.db.skin
 end
@@ -399,7 +404,7 @@ local function build(uf)
     -- one-time Hide can't win — hook OnShow and keep it down while the flag
     -- says WE own cast bars on this frame. Hooks can't be removed, so the
     -- per-frame flag (set in applySkin, cleared in removeSkin) is the gate.
-    local bcb = uf.CastBar
+    local bcb = blizzCastBar(uf)
     if bcb and bcb.HookScript then
         bcb:HookScript("OnShow", function(s)
             if uf.__vigilHideCast then s:Hide() end
@@ -410,8 +415,19 @@ local function build(uf)
     return true
 end
 
--- Hide Blizzard's own bar decorations while our skin is on (restored on toggle).
+-- Hide Blizzard's own plate decorations while our skin is on (restored on
+-- toggle). The classic-line client draws far more than retail: a border
+-- around the health bar, a LEVEL text right of the bar, an elite/skull
+-- classification frame, and a rounded aggro-glow outline. Blizzard's
+-- CompactUnitFrame code re-Shows several of these on its own events, so a
+-- one-time Hide() doesn't stick — SetAlpha(0) does (Blizzard doesn't drive
+-- their alpha), and applySkin re-runs this on every plate acquisition anyway.
+-- Every path is existence-guarded: paths that don't exist on this client
+-- build are simply skipped.
 local function setBlizzDecor(uf, shown)
+    local function setA(obj, a)
+        if obj and obj.SetAlpha then obj:SetAlpha(a) end
+    end
     local hb = uf.healthBar
     local bd = hb and hb.border
     if bd then
@@ -420,11 +436,17 @@ local function setBlizzDecor(uf, shown)
         else
             if bd.Hide then bd:Hide() end
         end
+        setA(bd, shown and 1 or 0)
     end
-    local sel = uf.selectionHighlight
-    if sel and sel.SetAlpha then
-        sel:SetAlpha(shown and 0.25 or 0) -- 0.25 is Blizzard's default
-    end
+    -- 0.25 is Blizzard's default selection alpha
+    setA(uf.selectionHighlight, shown and 0.25 or 0)
+    -- rounded gold/red threat glow around the bar (classic plates)
+    setA(uf.aggroHighlight, shown and 1 or 0)
+    -- level number + skull texture right of the bar (we draw our own, inside)
+    setA(uf.LevelFrame, shown and 1 or 0)
+    -- elite dragon / classification art
+    setA(uf.ClassificationFrame, shown and 1 or 0)
+    setA(uf.classificationIndicator, shown and 1 or 0)
 end
 
 -- Border speaks in this order: your target (accent) > threat state (red =
@@ -505,8 +527,9 @@ local function applySkin(uf, unit)
     local u = unitOf(uf)
     uf.__vigilHideCast = (Vigil.db.showCastbar and u
         and UnitCanAttack("player", u)) or false
-    if uf.__vigilHideCast and uf.CastBar and uf.CastBar:IsShown() then
-        uf.CastBar:Hide()
+    local bcb = blizzCastBar(uf)
+    if uf.__vigilHideCast and bcb and bcb:IsShown() then
+        bcb:Hide()
     end
 end
 

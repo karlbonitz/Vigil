@@ -174,6 +174,10 @@ bugs before they reach a player.
 pip install lupa && python3 tests/run.py
 ```
 
+In-game, `/vigil plate` dumps your target's nameplate frame tree (children,
+regions, textures, parent keys) into a copy-paste window — the ground-truth
+way to see what the live client actually draws on a plate.
+
 ## Versioning & releases
 
 - `## Interface: 20504, 20505` in the TOC targets the 2.5.4/2.5.5 clients; if

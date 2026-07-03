@@ -181,8 +181,20 @@ function Frame.StopMovingOrSizing() end
 function Frame.IsForbidden() return false end
 function Frame.GetName(self) return self.__name end
 
-function Frame.CreateTexture(self) return newRegion("texture") end
-function Frame.CreateFontString(self) return newRegion("fontstring") end
+function Frame.CreateTexture(self)
+    local r = newRegion("texture")
+    self.__regions = self.__regions or {}
+    self.__regions[#self.__regions + 1] = r
+    return r
+end
+function Frame.CreateFontString(self)
+    local r = newRegion("fontstring")
+    self.__regions = self.__regions or {}
+    self.__regions[#self.__regions + 1] = r
+    return r
+end
+function Frame.GetRegions(self) return unpack(self.__regions or {}) end
+function Frame.GetChildren(self) return unpack(self.__children or {}) end
 function Frame.CreateAnimationGroup(self) return setmetatable({}, AnimGroupMT) end
 
 function Frame.SetScript(self, ev, fn) self.__scripts[ev] = fn end
@@ -253,6 +265,10 @@ function CreateFrame(kind, name, parent, template)
         __shown = true, __scripts = {},
     }, FrameMT)
     Harness.frames[#Harness.frames + 1] = f
+    if type(parent) == "table" then
+        parent.__children = parent.__children or {}
+        parent.__children[#parent.__children + 1] = f
+    end
     if name then
         _G[name] = f
         if template and template:find("Slider") then
@@ -438,14 +454,21 @@ C_Timer = {
 
 -- a plate object shaped like a 2.5.x nameplate (what Skin/Nameplates reach into)
 function Harness.MakePlate()
-    local uf = CreateFrame("Frame")
-    uf.healthBar = CreateFrame("StatusBar")
+    local plate = CreateFrame("Frame")
+    local uf = CreateFrame("Frame", nil, plate)
+    uf.healthBar = CreateFrame("StatusBar", nil, uf)
     uf.healthBar:SetWidth(124)
     uf.healthBar:SetMinMaxValues(0, 100)
-    uf.name = newRegion("fontstring")
-    uf.CastBar = CreateFrame("StatusBar")
-    uf.selectionHighlight = newRegion("texture")
-    local plate = CreateFrame("Frame")
+    uf.name = uf:CreateFontString()
+    uf.CastBar = CreateFrame("StatusBar", nil, uf)
+    uf.selectionHighlight = uf:CreateTexture()
+    -- classic-client plate decorations the skin must suppress
+    uf.healthBar.border = CreateFrame("Frame", nil, uf.healthBar)
+    uf.aggroHighlight = uf:CreateTexture()
+    uf.LevelFrame = CreateFrame("Frame", nil, uf)
+    uf.LevelFrame.levelText = uf.LevelFrame:CreateFontString()
+    uf.LevelFrame.highLevelTexture = uf.LevelFrame:CreateTexture()
+    uf.ClassificationFrame = CreateFrame("Frame", nil, uf)
     plate.UnitFrame = uf
     return plate
 end

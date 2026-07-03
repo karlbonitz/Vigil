@@ -30,4 +30,5 @@ Modules\Threat.lua
 Modules\Auras.lua
 Modules\Parse.lua
 Modules\ParseExport.lua
+Modules\Inspect.lua
 Modules\Options.lua

@@ -74,6 +74,23 @@ blizzCB:Hide()
 blizzCB:Show() -- Blizzard would Show it when the mob starts casting
 ok(not blizzCB:IsShown(), "Blizzard plate cast bar suppressed on skinned enemy")
 
+-- 2c. Classic plate decorations are suppressed while the skin owns the plate
+-- (aggro glow / level text / classification art — the "standard Blizzard
+-- frame showing through" bug), and restored when the skin toggles off.
+local blizzUF = H.units.nameplate1.plate.UnitFrame
+eq(blizzUF.aggroHighlight.__alpha, 0, "aggro glow suppressed on skinned plate")
+eq(blizzUF.LevelFrame.__alpha, 0, "Blizzard level frame suppressed on skinned plate")
+eq(blizzUF.ClassificationFrame.__alpha, 0, "classification art suppressed on skinned plate")
+eq(blizzUF.selectionHighlight.__alpha, 0, "selection highlight suppressed on skinned plate")
+ok(not blizzUF.healthBar.border:IsShown(), "Blizzard bar border hidden on skinned plate")
+SlashCmdList["VIGIL"]("skin") -- off
+eq(blizzUF.aggroHighlight.__alpha, 1, "aggro glow restored when skin off")
+eq(blizzUF.LevelFrame.__alpha, 1, "Blizzard level frame restored when skin off")
+eq(blizzUF.selectionHighlight.__alpha, 0.25, "selection highlight restored when skin off")
+ok(blizzUF.healthBar.border:IsShown(), "Blizzard bar border restored when skin off")
+SlashCmdList["VIGIL"]("skin") -- back on
+eq(blizzUF.aggroHighlight.__alpha, 0, "aggro glow re-suppressed when skin back on")
+
 -- 3. Kickable cast starts (live API path): Greater Heal is in the Intel Pack
 H.units.nameplate1.casting = {
     name = "Greater Heal", spellID = 25314,
@@ -259,6 +276,12 @@ SlashCmdList["VIGIL"]("test")
 local export = Vigil.ParseExport:BuildExport()
 ok(type(export) == "string" and export:find('"sessions"', 1, true) ~= nil, "export builds JSON")
 ok(export:find('"miss":true', 1, true) ~= nil, "export contains the let-through row")
+
+-- plate inspector (/vigil plate): dumps the frame tree with parentKeys
+local dump = Vigil.Inspect:DumpPlate(H.units.nameplate2.plate)
+ok(dump:find("[healthBar]", 1, true) ~= nil, "inspector dump names the health bar")
+ok(dump:find("[aggroHighlight]", 1, true) ~= nil, "inspector dump names the aggro glow")
+ok(dump:find("[LevelFrame]", 1, true) ~= nil, "inspector dump names the level frame")
 
 -- 13. Options interactions: toggle every checkbox + run reset
 for _, f in ipairs(H.frames) do
