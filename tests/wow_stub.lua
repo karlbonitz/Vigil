@@ -402,7 +402,7 @@ function GetZoneText() return "Shadow Labyrinth" end
 function GetInstanceInfo() return "Shadow Labyrinth", "party", 2, "Heroic", 5, 0, false, 555, 5 end
 function IsInInstance() return true, "party" end
 function IsInRaid() return false end
-function IsInGroup() return false end
+function IsInGroup() return Harness.inGroup or false end
 function GetNumGroupMembers() return 0 end
 function InCombatLockdown() return false end
 function LoggingCombat() end

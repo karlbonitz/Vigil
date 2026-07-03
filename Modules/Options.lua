@@ -263,7 +263,7 @@ function M:OnEnable()
 
     y = header("Threat & general", y)
     check(PAD, y, "threat", "Threat tint",
-        "Aggro state on the plate: colored strip + border — red when a mob is on you or you're about to pull (tank mode: green = safely tanking, red = losing it).")
+        "Group-only aggro state (strip + border): red = that mob is targeting YOU. Tank mode: green = it's on you, red = it's beating on someone else. Solo it stays silent — everything is on you anyway.")
     check(COL2, y, "tankMode", "Tank mode (invert colors)",
         "Green = securely tanking, red = you lost the mob.")
     y = y - 24

@@ -193,23 +193,35 @@ eq(uf2.__alpha, 0.5, "non-target plate faded to focusAlpha")
 eq(uf1.__alpha, 1, "target plate at full opacity")
 eq(o2.__alpha, 0.5, "non-target cast overlay faded too")
 
--- aggro state colors the border: nameplate2 (non-target) pulls aggro -> red
-H.units.nameplate2.threat = { isTanking = true, status = 3, pct = 100 }
+-- Aggro display. SOLO: silent even when a mob is on you (it always is).
+H.alias.nameplate2target = "player" -- the mob is targeting me
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
 local b2 = uf2.__vigilBorder.edges[1]
-ok(b2.__vr and b2.__vr > 0.8 and b2.__vg < 0.4, "aggro on non-target: red border")
--- the TARGET keeps its accent border even with aggro
-H.units.nameplate1.threat = { isTanking = true, status = 3, pct = 100 }
+ok(b2.__vr == 0 and b2.__vg == 0, "solo: no aggro border even when targeted")
+
+-- GROUPED: mob targeting me -> red border (ground truth, no threat table)
+H.inGroup = true
+H.FireEvent("UNIT_THREAT_LIST_UPDATE")
+H.Advance(0.3)
+ok(b2.__vr and b2.__vr > 0.8 and b2.__vg < 0.4, "grouped: mob on ME -> red border")
+
+-- the TARGET keeps its accent border even when it's on me
+H.alias.nameplate1target = "player"
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
 local b1 = uf1.__vigilBorder.edges[1]
 ok(b1.__vg and b1.__vg > 0.5, "target keeps accent border over threat")
--- threat gone -> border back to black
-H.units.nameplate2.threat = nil
+
+-- mob switches to a groupmate -> red clears (dps mode: not your problem)
+H.alias.nameplate2target = nil
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
-ok(b2.__vr == 0 and b2.__vg == 0, "border clears when threat drops")
+ok(b2.__vr == 0 and b2.__vg == 0, "border clears when the mob leaves you")
+
+H.inGroup = false
+H.FireEvent("UNIT_THREAT_LIST_UPDATE")
+H.Advance(0.3)
 
 H.alias.mouseover = "nameplate2"
 H.FireEvent("UPDATE_MOUSEOVER_UNIT")

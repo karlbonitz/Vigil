@@ -1,33 +1,38 @@
 -- Vigil/Modules/Threat.lua
 --
--- Threat tint on the overlay's top strip. Deliberately MINIMAL in v0.1 and
--- behind a capability check, because the native threat API is the one piece of
--- the 2.5.x client our research found contradictory. We never assume it exists:
--- if UnitDetailedThreatSituation is missing, the module disables itself cleanly.
+-- Aggro state on the plate (strip + border, via Skin.SetThreat). Two rules
+-- learned the hard way:
 --
--- TODO(v0.2): when native threat is absent/garbage, fall back to a
--- LibThreatClassic2-style combat-log estimator instead of going dark. Until then
--- the strip simply hides, and the rest of Vigil is unaffected.
+--   1. SOLO, threat says NOTHING. Everything you fight is on you — painting
+--      it red is a tautology. The display only speaks in a group.
+--   2. Color comes from GROUND TRUTH only: the mob's actual target
+--      (unit.."target" — the standard classic tank-plate technique). The
+--      2.5.x native threat table is NOT consulted at all: it returned
+--      "you have aggro" for everything in a real 5-man (2026-07-03),
+--      exactly the unreliability our research predicted. The predictive
+--      amber "about to pull" tier returns when a LibThreatClassic2-style
+--      combat-log estimator lands.
 local addonName, Vigil = ...
 local M = Vigil:NewModule("Threat")
 
 local THROTTLE = 0.2
 local accum = 0
-local hasNative = false
 
 local function colorForStatus(unit)
-    -- status: 0/1 = low, 2 = high (about to pull), 3 = tanking
-    local _, status, pct = UnitDetailedThreatSituation("player", unit)
-    if not status then return nil end
+    if not IsInGroup() then return nil end -- solo: aggro info is noise
+
+    local mobTarget = unit .. "target"
+    local onMe = UnitExists(mobTarget) and UnitIsUnit(mobTarget, "player")
+
     if Vigil.db.tankMode then
-        if status == 3 then return "threatOK"   -- securely tanking
-        elseif status == 2 then return "threatWarn"
-        else return "threatBad" end             -- you lost the mob
-    else
-        if status >= 2 then return "threatBad"  -- you (dps) are pulling/pulled
-        elseif (pct or 0) >= 80 then return "threatWarn"
-        else return nil end                     -- safe: don't clutter
+        if onMe then return "threatOK" end               -- it's on you: good
+        -- it's actively fighting and beating on someone else: you lost it
+        if UnitExists(mobTarget) and UnitAffectingCombat(unit) then
+            return "threatBad"
+        end
+        return nil
     end
+    return onMe and "threatBad" or nil                   -- it's coming for YOU
 end
 
 local function update()
@@ -49,11 +54,6 @@ local function update()
 end
 
 function M:OnEnable()
-    hasNative = (type(UnitDetailedThreatSituation) == "function")
-    if not hasNative then
-        Vigil:Debug("native threat API not found — threat tint disabled (LibThreatClassic2 fallback is a v0.2 TODO).")
-        return
-    end
     -- event-nudged, but coalesced on a light ticker so 25-man stays cheap
     Vigil:RegisterEvent("UNIT_THREAT_LIST_UPDATE", function() accum = THROTTLE end)
     Vigil.frame:HookScript("OnUpdate", function(_, elapsed)
