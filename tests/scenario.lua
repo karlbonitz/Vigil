@@ -63,6 +63,10 @@ H.alias.target = "nameplate1"
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
 local o = Vigil.plates.nameplate1
 ok(o ~= nil, "overlay created on plate add")
+-- regression: a FRESH overlay must not render its empty cast bar (the
+-- "ghost grey bar under every new plate" bug found in-game)
+ok(not o.castbar:IsShown(), "fresh overlay's cast bar hidden before any cast")
+ok(not o.iconF:IsShown(), "fresh overlay's icon hidden before any cast")
 
 -- 2b. Blizzard's own plate cast bar stays suppressed while we own cast bars
 local blizzCB = H.units.nameplate1.plate.UnitFrame.CastBar

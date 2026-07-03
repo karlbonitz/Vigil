@@ -221,7 +221,12 @@ local function CreateOverlay()
     f.padlock = lock
 
     -- thin threat strip along the top edge (managed by Modules/Threat.lua;
-    -- visible whenever the overlay exists, not only during casts)
+    -- visible whenever the overlay exists, not only during casts).
+    -- NOTE: Reset() at the bottom of this constructor is load-bearing — a
+    -- fresh overlay's cast-bar children are otherwise SHOWN from creation,
+    -- and since the overlay frame stays visible between casts (v0.3.0), the
+    -- empty bar rendered as a ghost grey bar under every new plate until
+    -- the frame was recycled. Pooled frames were clean (Release resets).
     local strip = f:CreateTexture(nil, "OVERLAY")
     strip:SetTexture(Vigil.BAR)
     strip:SetHeight(3)
@@ -336,6 +341,7 @@ local function CreateOverlay()
         cb:SetScript("OnUpdate", cb.onUpdate)
     end
 
+    f:Reset() -- see the threat-strip note above: never ship a live cast bar
     return f
 end
 

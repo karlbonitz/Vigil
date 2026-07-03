@@ -24,6 +24,14 @@ local M = Vigil:NewModule("Skin")
 local skinned = {}     -- unit token -> UnitFrame, for every plate we currently skin
 local applying = false -- reentrancy guard for the SetStatusBarColor hook
 
+-- Which unit does this frame show? Prefer OUR field (set from the event's
+-- authoritative token in applySkin) over Blizzard's uf.unit — at /reload the
+-- Blizzard field isn't populated yet when the initial plate batch fires
+-- ADDED, which used to silently skip coloring + cast-bar suppression there.
+local function unitOf(uf)
+    return uf.__vigilUnit or uf.unit
+end
+
 local function active()
     return Vigil.db.enabled and Vigil.db.skin
 end
@@ -48,11 +56,12 @@ local function classColor(unit)
 end
 
 local function applyBarColor(uf)
-    local r, g, b = classColor(uf.unit)
-    if not r and uf.unit and UnitExists(uf.unit) and UnitSelectionColor then
+    local unit = unitOf(uf)
+    local r, g, b = classColor(unit)
+    if not r and unit and UnitExists(unit) and UnitSelectionColor then
         -- not class-colored (NPC, or the option is off): re-assert reaction
         -- color so toggling class colors off reverts live
-        r, g, b = UnitSelectionColor(uf.unit)
+        r, g, b = UnitSelectionColor(unit)
     end
     if r then
         applying = true
@@ -198,7 +207,7 @@ end
 local function updateLevel(uf)
     local fs = uf.__vigilLvl
     if not fs then return end
-    local unit = uf.unit
+    local unit = unitOf(uf)
     if not (active() and Vigil.db.showLevel and unit and UnitExists(unit)) then
         fs:SetText(""); return
     end
@@ -223,7 +232,7 @@ end
 local function updateMana(uf)
     local m = uf.__vigilMana
     if not m then return end
-    local unit = uf.unit
+    local unit = unitOf(uf)
     if not (active() and Vigil.db.manaBar and unit and UnitExists(unit))
         or UnitPowerType(unit) ~= 0 then -- 0 = mana
         m:Hide(); return
@@ -344,7 +353,7 @@ local function build(uf)
     -- keep class colors in place when Blizzard re-asserts reaction color
     hooksecurefunc(hb, "SetStatusBarColor", function(bar, r, g, b)
         if applying or not active() then return end
-        local cr, cg, cb = classColor(uf.unit)
+        local cr, cg, cb = classColor(unitOf(uf))
         if cr and (r ~= cr or g ~= cg or b ~= cb) then
             applying = true
             bar:SetStatusBarColor(cr, cg, cb)
@@ -390,7 +399,8 @@ end
 -- plain black. Threat.lua feeds the state via SetThreat below.
 local function updateHighlight(uf)
     if not uf.__vigilBorder then return end
-    local isTarget = uf.unit and UnitIsUnit(uf.unit, "target")
+    local u = unitOf(uf)
+    local isTarget = u and UnitIsUnit(u, "target")
     if isTarget then
         uf.__vigilBorder:SetColor(Vigil:RGB("kick"))
     elseif uf.__vigilThreat then
@@ -414,8 +424,9 @@ function M:SetThreat(unit, key)
     end
 end
 
-local function applySkin(uf)
+local function applySkin(uf, unit)
     if not uf or not uf.healthBar then return end
+    if unit then uf.__vigilUnit = unit end -- the event's token is the truth
     if not uf.__vigilSkinned then
         if not build(uf) then return end
     end
@@ -441,7 +452,7 @@ local function applySkin(uf)
     uf.__vigilHover:Hide()
     if uf.name then
         uf.name:SetFont(STANDARD_TEXT_FONT, Vigil.db.nameSize or 10, "OUTLINE")
-        local r, g, b = classColor(uf.unit)
+        local r, g, b = classColor(unitOf(uf))
         if r then uf.name:SetTextColor(r, g, b) else uf.name:SetTextColor(1, 1, 1) end
     end
     local small = math.max(7, (Vigil.db.nameSize or 10) - 2)
@@ -455,8 +466,9 @@ local function applySkin(uf)
 
     -- suppress Blizzard's plate cast bar only where OUR cast overlay serves:
     -- enemies, with Vigil cast bars enabled. Friendlies keep Blizzard's.
-    uf.__vigilHideCast = (Vigil.db.showCastbar and uf.unit
-        and UnitCanAttack("player", uf.unit)) or false
+    local u = unitOf(uf)
+    uf.__vigilHideCast = (Vigil.db.showCastbar and u
+        and UnitCanAttack("player", u)) or false
     if uf.__vigilHideCast and uf.CastBar and uf.CastBar:IsShown() then
         uf.CastBar:Hide()
     end
@@ -483,8 +495,9 @@ local function removeSkin(uf)
     setBlizzDecor(uf, true)
     if uf.name and uf.__vigilOrigFont then uf.name:SetFont(unpack(uf.__vigilOrigFont)) end
     -- hand bar color back to the client's reaction coloring
-    if uf.unit and UnitExists(uf.unit) and UnitSelectionColor then
-        local r, g, b = UnitSelectionColor(uf.unit)
+    local u = unitOf(uf)
+    if u and UnitExists(u) and UnitSelectionColor then
+        local r, g, b = UnitSelectionColor(u)
         if r then
             applying = true
             hb:SetStatusBarColor(r, g, b)
