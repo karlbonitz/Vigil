@@ -36,12 +36,14 @@ for spell, cd in pairs(cfg.cooldowns) do H.cooldowns[spell] = cd end
 local MOB_GUID = "Creature-0-1111"
 local function spawnMob(token, name, opts)
     opts = opts or {}
+    local plate = H.MakePlate()
+    plate.UnitFrame.unit = token -- Blizzard sets this on real 2.5.x plates
     H.units[token] = {
         name = name, guid = opts.guid or MOB_GUID, level = opts.level or 70,
         hostile = true, isPlayer = opts.isPlayer or false,
         classification = opts.classification or "normal",
         creatureType = opts.creatureType or "Humanoid",
-        plate = H.MakePlate(),
+        plate = plate,
         auras = opts.auras,
     }
 end
@@ -61,6 +63,12 @@ H.alias.target = "nameplate1"
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
 local o = Vigil.plates.nameplate1
 ok(o ~= nil, "overlay created on plate add")
+
+-- 2b. Blizzard's own plate cast bar stays suppressed while we own cast bars
+local blizzCB = H.units.nameplate1.plate.UnitFrame.CastBar
+blizzCB:Hide()
+blizzCB:Show() -- Blizzard would Show it when the mob starts casting
+ok(not blizzCB:IsShown(), "Blizzard plate cast bar suppressed on skinned enemy")
 
 -- 3. Kickable cast starts (live API path): Greater Heal is in the Intel Pack
 H.units.nameplate1.casting = {

@@ -173,7 +173,8 @@ function M:OnEnable()
     y = y - 44
 
     y = header("Cast bars & interrupts", y)
-    check(PAD, y, "showCastbar", "Enemy cast bars", nil)
+    check(PAD, y, "showCastbar", "Enemy cast bars",
+        "Vigil's styled cast bar under each enemy plate. Replaces Blizzard's plate cast bar (which comes back if you turn this off).", refreshSkin)
     check(COL2, y, "showCastTime", "Cast time remaining",
         "Seconds left on the cast, shown at the right end of the bar.")
     y = y - 24

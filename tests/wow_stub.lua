@@ -138,10 +138,25 @@ local AnimGroupMT = { __index = AnimGroup }
 
 -- Frames
 local Frame = {}
-Frame.Show = Region.Show
-Frame.Hide = Region.Hide
+-- unlike plain regions, frames fire OnShow/OnHide on visibility TRANSITIONS
+function Frame.Show(self)
+    if not self.__shown then
+        self.__shown = true
+        local fn = self.__scripts and self.__scripts.OnShow
+        if fn then fn(self) end
+    end
+end
+function Frame.Hide(self)
+    if self.__shown then
+        self.__shown = false
+        local fn = self.__scripts and self.__scripts.OnHide
+        if fn then fn(self) end
+    end
+end
 Frame.IsShown = Region.IsShown
-Frame.SetShown = Region.SetShown
+function Frame.SetShown(self, s)
+    if s then self:Show() else self:Hide() end
+end
 Frame.SetPoint = Region.SetPoint
 Frame.ClearAllPoints = Region.ClearAllPoints
 Frame.SetAllPoints = Region.SetAllPoints

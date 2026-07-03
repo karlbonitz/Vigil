@@ -32,6 +32,14 @@ of only in the after-session report.
   GUID instead of the caster's. Found by the new headless test harness
   (`tests/`), which loads the whole addon under a stubbed WoW API and drives
   a full fake session per class.
+- Fix (in-game test pass): the mana bar rendered as a washed-out grey-white
+  strip — 32px of gradient texture squeezed into 4px averages to near-white.
+  Now a solid, readable blue. (Mobs like Durotar's crabs carry a token mana
+  pool they never use, so the strip was showing on non-casters too — toggle
+  "Mana bar on casters" off if you'd rather not see those.)
+- Fix: Blizzard's own nameplate cast bar no longer double-draws its flat grey
+  bar under Vigil's styled one — suppressed on skinned enemy plates while
+  Vigil's cast bars are enabled, restored the moment you disable either.
 
 ## v0.5.0 — Vigil Parse, phase 1 (the collector)
 The data layer begins: "the utility parse Warcraft Logs forgot," starting with

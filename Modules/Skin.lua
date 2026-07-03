@@ -191,8 +191,10 @@ local function build(uf)
     mana:SetPoint("TOPLEFT", hb, "BOTTOMLEFT", 0, -3)
     mana:SetPoint("TOPRIGHT", hb, "BOTTOMRIGHT", 0, -3)
     mana:SetHeight(4)
-    mana:SetStatusBarTexture(Vigil.BAR)
-    mana:SetStatusBarColor(0.25, 0.5, 0.95)
+    -- flat texture, not the gradient TGA: 32px of gradient squeezed into 4px
+    -- averages out to a washed-up near-white; a solid fill stays readably BLUE
+    mana:SetStatusBarTexture(Vigil.WHITE)
+    mana:SetStatusBarColor(0.18, 0.42, 0.92)
     local mbg = mana:CreateTexture(nil, "BACKGROUND")
     mbg:SetAllPoints(mana)
     mbg:SetColorTexture(0.04, 0.04, 0.05, 0.8)
@@ -214,6 +216,18 @@ local function build(uf)
             applying = false
         end
     end)
+
+    -- Blizzard's own plate cast bar double-draws under Vigil's styled one (a
+    -- flat grey bar during casts). Blizzard re-Shows it on every cast, so a
+    -- one-time Hide can't win — hook OnShow and keep it down while the flag
+    -- says WE own cast bars on this frame. Hooks can't be removed, so the
+    -- per-frame flag (set in applySkin, cleared in removeSkin) is the gate.
+    local bcb = uf.CastBar
+    if bcb and bcb.HookScript then
+        bcb:HookScript("OnShow", function(s)
+            if uf.__vigilHideCast then s:Hide() end
+        end)
+    end
 
     uf.__vigilSkinned = true
     return true
@@ -274,10 +288,19 @@ local function applySkin(uf)
     updateLevel(uf)
     updateMana(uf)
     updateHighlight(uf)
+
+    -- suppress Blizzard's plate cast bar only where OUR cast overlay serves:
+    -- enemies, with Vigil cast bars enabled. Friendlies keep Blizzard's.
+    uf.__vigilHideCast = (Vigil.db.showCastbar and uf.unit
+        and UnitCanAttack("player", uf.unit)) or false
+    if uf.__vigilHideCast and uf.CastBar and uf.CastBar:IsShown() then
+        uf.CastBar:Hide()
+    end
 end
 
 local function removeSkin(uf)
     if not uf or not uf.__vigilSkinned then return end
+    uf.__vigilHideCast = false -- hand the plate cast bar back to Blizzard
     local hb = uf.healthBar
     if uf.__vigilOrigTex then hb:SetStatusBarTexture(uf.__vigilOrigTex) end
     uf.__vigilShadow:Hide()
