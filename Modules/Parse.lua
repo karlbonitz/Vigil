@@ -186,6 +186,12 @@ local function onCLEU()
         local _, _, _, _, sName, sFlags, _, _, _, _, _, _, kickSpell = CombatLogGetCurrentEventInfo()
         if isFriendlyPlayer(sFlags) then
             rosterTouch(srcGUID, sName, sFlags, kickSpell)
+            Vigil:Debug("roster: interrupt by", sName, "recorded",
+                isGrouped(sFlags) and "(grouped)" or "(bystander)")
+        else
+            -- /vigil debug shows WHY a kick was skipped (pet? hostile? odd flags?)
+            Vigil:Debug(("roster: interrupt by %s SKIPPED (flags 0x%x)")
+                :format(tostring(sName), sFlags or 0))
         end
 
     elseif sub == "SPELL_CAST_SUCCESS" then

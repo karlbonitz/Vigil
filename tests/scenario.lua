@@ -153,6 +153,9 @@ eq(o.active and o.active.code, "ready", "ready tier: interrupt ready + in range"
 ok(o.kickF:IsShown(), "cue label shown")
 eq(o.kickText:GetText(), cfg.label, "cue label text matches class tool")
 eq(H.sounds, 1, "sound played exactly once")
+-- the centered cue clears the plate's inner text (cueHidesText default on)
+ok(not blizzUF.__vigilHP:IsShown(), "cue clears the HP text while shown")
+ok(not blizzUF.__vigilLvl:IsShown(), "cue clears the level text while shown")
 
 -- 4. Cooldown re-eval doesn't re-fire the sound
 H.FireEvent("SPELL_UPDATE_COOLDOWN")
@@ -176,6 +179,8 @@ H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
 eq(o.flashing, "kicked", "KICKED flash started")
 eq(o.timeText:GetText(), "KICKED", "verdict label")
 ok(o.active == nil, "cast record resolved at flash start")
+ok(blizzUF.__vigilHP:IsShown(), "HP text returns once the cue clears")
+ok(blizzUF.__vigilLvl:IsShown(), "level text returns once the cue clears")
 H.Advance(1.0)
 ok(not o.castbar:IsShown(), "bar cleared after flash")
 ok(o.flashing == nil, "flash state cleared")

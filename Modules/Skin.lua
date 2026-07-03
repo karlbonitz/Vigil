@@ -476,6 +476,19 @@ local function updateHighlight(uf)
     end
 end
 
+-- While the cue label owns the bar center (db.cueHidesText, "center" label
+-- position), the plate's level/HP text yields to it — the shout stands alone.
+-- Restored the moment the cue clears; applySkin re-asserts visibility so a
+-- pooled frame can never come back with its text stuck hidden.
+function M:CueTextSuppress(unit, suppressed)
+    local uf = unit and skinned[unit]
+    if not (uf and uf.__vigilSkinned) then return end
+    local hide = suppressed and active() and Vigil.db.cueHidesText
+        and Vigil.db.labelPos ~= "above"
+    if uf.__vigilHP then uf.__vigilHP:SetShown(not hide) end
+    if uf.__vigilLvl then uf.__vigilLvl:SetShown(not hide) end
+end
+
 -- Threat.lua pushes each plate's aggro state here (a palette key, or nil).
 function M:SetThreat(unit, key)
     local uf = skinned[unit]
@@ -539,6 +552,8 @@ local function applySkin(uf, unit)
     local small = math.max(7, (Vigil.db.nameSize or 10) - 2)
     Vigil:SetFont(uf.__vigilHP, small)
     Vigil:SetFont(uf.__vigilLvl, small)
+    uf.__vigilHP:Show()  -- never inherit a stale cue-suppression from a
+    uf.__vigilLvl:Show() -- pooled frame (see CueTextSuppress)
     applyBarColor(uf)
     updateHealthText(uf)
     updateLevel(uf)

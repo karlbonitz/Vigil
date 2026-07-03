@@ -49,7 +49,7 @@ function M:OnEnable()
     scroll:SetPoint("TOPLEFT", 0, -4)
     scroll:SetPoint("BOTTOMRIGHT", -27, 4)
     local content = CreateFrame("Frame")
-    content:SetSize(590, 920)
+    content:SetSize(590, 950)
     scroll:SetScrollChild(content)
 
     local checks, sliders, drops = {}, {}, {}
@@ -362,6 +362,9 @@ function M:OnEnable()
         "Only shout when the target is actually within your stop's range. Ready-but-too-far casts stay gold without the popup, and the cue fires the moment you close in.")
     check(COL2, y, "outcomeFlash", "Flash the outcome",
         "As a flagged cast ends, the bar flashes the verdict: teal KICKED, red MISSED (it completed while your stop was ready), or WASTED (you kicked an unkickable cast).")
+    y = y - 24
+    check(PAD, y, "cueHidesText", "Cue clears the bar text",
+        "While the INTERRUPT/FEAR/STUN label is centered on the health bar, that plate's level and HP text step aside so the call stands alone. Applies only to the \"Plate center\" label position; everything returns the moment the cue clears.")
     y = y - 28
 
     y = header("Your auras", y)

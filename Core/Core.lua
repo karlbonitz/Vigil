@@ -54,6 +54,7 @@ local defaults = {
     rangeCheck   = true,   -- only shout when the target is actually within your stop's range
     outcomeFlash = true,   -- flash the verdict as a flagged cast ends (KICKED/MISSED/WASTED)
     labelPos     = "center", -- cue label position: "center" (on health bar) | "above" (cast bar)
+    cueHidesText = true,   -- centered cue label clears the plate's level/HP text while shown
     threat       = true,   -- threat tint (feature-detected; see Modules/Threat.lua)
     tankMode     = false,  -- invert threat colors for tanking
     auras        = true,   -- show your own DoT/debuff timers on enemy plates

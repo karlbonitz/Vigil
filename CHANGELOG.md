@@ -27,6 +27,10 @@ live, with zero-config defaults unchanged:
 - **Aura row hugs the plate**: DoT icons now anchor just above the NAME
   instead of the plate frame's invisible top edge, which left them floating
   in mid-air above the stack.
+- **The cue can clear the bar text** (new option, on by default): while the
+  INTERRUPT/FEAR/STUN label is centered on the health bar, that plate's
+  level and HP text step aside so the shout stands alone — everything
+  returns the moment the cue clears. Toggle: "Cue clears the bar text".
 - **Vigil Parse: the roster.** Parse now profiles every FRIENDLY player it
   witnesses landing an interrupt — grouped with you or just nearby: name,
   class, lifetime kicks (and how many while in your groups), favorite tool,

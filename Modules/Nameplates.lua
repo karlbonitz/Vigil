@@ -104,9 +104,9 @@ local wastedPop = function(kf, elapsed)
     local p = kf.t / POP_TIME
     kf:SetScale(p >= 1 and 1 or (1.4 - 0.4 * p))
     if kf.t >= 0.9 then
-        kf:SetScript("OnUpdate", nil)
-        kf:Hide()
-        kf:SetScale(1)
+        -- route through HideKick so everything the label borrowed (alpha,
+        -- suppressed level/HP text) is handed back
+        kf.overlay:HideKick()
     end
 end
 
@@ -210,6 +210,7 @@ local function CreateOverlay()
     kick:SetPoint("CENTER", kickF, "CENTER", 0, 0)
     kick:SetTextColor(Vigil:RGB("kick"))
     kickF:Hide()
+    kickF.overlay = f -- wastedPop's route back to HideKick
     f.kickF, f.kickText = kickF, kick
 
     -- uninterruptible padlock, right side of the bar (replaces the time text)
@@ -242,6 +243,9 @@ local function CreateOverlay()
         self.kickText:SetTextColor(Vigil:RGB("kick")) -- may be red from a WASTED flash
         self.glowTex:SetVertexColor(Vigil:RGB("kick")) -- accent-aware, per show
         self:SetAlpha(1) -- the cue punches through the focus fade, always
+        if Vigil.Skin and Vigil.Skin.CueTextSuppress then
+            Vigil.Skin:CueTextSuppress(self.unit, true) -- the shout gets the bar to itself
+        end
         local kf = self.kickF
         if not kf:IsShown() then
             kf.t = 0
@@ -262,6 +266,9 @@ local function CreateOverlay()
         self.kickF:SetScale(1)
         self.glow:Hide()
         self.glowAnim:Stop()
+        if self.unit and Vigil.Skin and Vigil.Skin.CueTextSuppress then
+            Vigil.Skin:CueTextSuppress(self.unit, false) -- level/HP text returns
+        end
         -- cue gone: fall back into the focus fade (if one is in effect)
         if self.unit and Vigil.Skin and Vigil.Skin.CurrentDim then
             self:SetAlpha(Vigil.Skin.CurrentDim(self.unit))
@@ -298,6 +305,9 @@ local function CreateOverlay()
         kf:SetScale(1.4)
         kf:Show()
         kf:SetScript("OnUpdate", wastedPop)
+        if Vigil.Skin and Vigil.Skin.CueTextSuppress then
+            Vigil.Skin:CueTextSuppress(self.unit, true) -- WASTED sits center-bar too
+        end
     end
 
     function f:Reset()
