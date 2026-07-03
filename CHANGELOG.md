@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.7.0 — the stellar pass
+A visual polish round aimed squarely at the best-in-class nameplate addons:
+bars that react, plates that respond to you, and a theme system — all still
+purely additive decoration on Blizzard's plates (no taint, no replacement).
+
+- **Damage bites**: when a mob loses health, a bright sliver marks the lost
+  segment and fades out — incoming damage reads at a glance. Pooled textures
+  and one self-stopping animation driver, so idle cost is zero.
+- **Focus dim**: while you have a target, other plates drop to 85% opacity so
+  your kill target reads instantly. Cast bars and interrupt cues NEVER dim —
+  an off-target kick window still gets full volume.
+- **Mouseover wash**: the plate under your cursor lights up softly.
+- **Execute mark**: a quiet tick at 20% health that lights up red — along
+  with the HP text — once the mob is in execute range. Every class knows the
+  kill window.
+- **Accent themes**: Gold (default), Teal, Violet, or Ice. One dropdown
+  re-tints the cue glow, the INTERRUPT label, the kickable-cast color, and
+  the target outline together. Padlock red and threat colors are semantic
+  and never themed — "go" can never impersonate "stop".
+- **Juice**: cast-bar spell icons pop in; new and refreshed DoT icons pop in;
+  a 1px glass highlight tops the health and cast bars.
+- **The options panel is now scrollable** — the height ceiling is gone for
+  good, with three new toggles (damage flashes, focus dim, execute mark) and
+  the accent dropdown under Nameplates.
+
 ## v0.6.0 — the coach update (range, verdicts, onboarding)
 The cue gets more honest, and the addon starts teaching in the moment instead
 of only in the after-session report.

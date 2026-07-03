@@ -79,6 +79,18 @@ local function makeButton(row, i)
     return b
 end
 
+-- new (or refreshed) aura instances land with a quick settle, like the cue
+local auraPop = function(b, elapsed)
+    b.t = b.t + elapsed
+    local p = b.t / 0.12
+    if p >= 1 then
+        b:SetScale(1)
+        b:SetScript("OnUpdate", nil)
+    else
+        b:SetScale(1.25 - 0.25 * p)
+    end
+end
+
 local function acquireRow()
     local row = table.remove(pool)
     if not row then
@@ -170,6 +182,17 @@ function M:Refresh(unit)
         b:SetPoint("LEFT", row, "LEFT", (i - 1) * (size + GAP), 0)
         b.icon:SetTexture(s.icon)
 
+        -- pop when this slot starts showing a NEW aura instance (a refresh of
+        -- the same aura gets a new start time, so it pops too — good feedback)
+        local key = tostring(s.icon) .. "|"
+            .. tostring(math.floor(((s.expiration or 0) - (s.duration or 0)) * 10))
+        if b.__vigilKey ~= key then
+            b.__vigilKey = key
+            b.t = 0
+            b:SetScale(1.25)
+            b:SetScript("OnUpdate", auraPop)
+        end
+
         local col = Vigil.db.auraDispel and s.dispel
             and DebuffTypeColor and DebuffTypeColor[s.dispel]
         if col then
@@ -196,7 +219,12 @@ function M:Refresh(unit)
         b.expiration = s.expiration
         b:Show()
     end
-    for i = n + 1, #row.buttons do row.buttons[i]:Hide() end
+    for i = n + 1, #row.buttons do
+        local b = row.buttons[i]
+        b:Hide()
+        b:SetScale(1)
+        b:SetScript("OnUpdate", nil)
+    end
     row.shown = n
     row:Show()
     updateRow(row)

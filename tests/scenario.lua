@@ -173,6 +173,32 @@ H.units.nameplate1.auras = { { name = "Shadow Word: Pain", debuffType = "Magic",
 H.FireEvent("UNIT_AURA", "nameplate1")
 H.Advance(0.6) -- backstop rescan + text ticker
 
+-- 11b. Stellar-pass features: bites, execute mark, focus dim, hover wash
+local uf1 = H.units.nameplate1.plate.UnitFrame
+local uf2 = H.units.nameplate2.plate.UnitFrame
+local hb1 = uf1.healthBar
+
+hb1:SetValue(80)              -- health going UP never bites
+hb1:SetValue(55)              -- health lost -> a bite spawns and fades
+H.Advance(0.6)
+ok(#uf1.__vigilBitePool >= 1, "damage bite spawned, faded, and was pooled")
+
+ok(uf1.__vigilExec and uf1.__vigilExec:IsShown(), "execute tick shown")
+ok(uf1.__vigilExec.__vg > 0.9, "execute tick quiet above 20%")
+hb1:SetValue(15)              -- into execute range
+ok(uf1.__vigilExec.__vg < 0.5, "execute tick lit below 20%")
+
+H.FireEvent("PLAYER_TARGET_CHANGED") -- target is nameplate1
+eq(uf2.__alpha, 0.85, "non-target plate dimmed")
+eq(uf1.__alpha, 1, "target plate at full opacity")
+
+H.alias.mouseover = "nameplate2"
+H.FireEvent("UPDATE_MOUSEOVER_UNIT")
+ok(uf2.__vigilHover:IsShown(), "hover wash on mouseover plate")
+H.alias.mouseover = nil
+H.Advance(0.4)
+ok(not uf2.__vigilHover:IsShown(), "hover wash retired when mouse leaves")
+
 -- 12. Plate despawn releases cleanly; slash commands and export run
 H.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
 ok(Vigil.plates.nameplate1 == nil, "overlay released on plate removal")

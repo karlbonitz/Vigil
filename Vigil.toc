@@ -2,7 +2,7 @@
 ## Title: Vigil
 ## Notes: Interrupt-smart nameplates — know exactly when to kick, and when not to waste it.
 ## Author: karlbonitz
-## Version: 0.6.0
+## Version: 0.7.0
 ## SavedVariables: VigilDB, VigilParseDB
 ## X-Category: Combat
 ## X-Website: https://github.com/karlbonitz/Vigil

@@ -4,7 +4,7 @@
 local addonName, Vigil = ...
 
 Vigil.name = addonName
-Vigil.version = "0.6.0"
+Vigil.version = "0.7.0"
 
 -- ---------------------------------------------------------------------------
 -- Output
@@ -39,8 +39,24 @@ Vigil.colors = {
     threatBad = { 0.90, 0.20, 0.20 }, -- you pulled aggro / tank lost it
 }
 
+-- Accent themes: the "go" color worn by the cue glow, the INTERRUPT label,
+-- the kickable-cast bar, and the target outline. Every consumer reads it via
+-- RGB("kick"), so remapping here re-themes the whole addon in one move.
+-- Red (padlock/locked) and the threat colors are SEMANTIC and never themed —
+-- and no accent is allowed near red, so "go" can never impersonate "stop".
+Vigil.accents = {
+    gold   = { 1.00, 0.82, 0.10 },
+    teal   = { 0.16, 0.78, 0.62 },
+    violet = { 0.68, 0.45, 1.00 },
+    ice    = { 0.55, 0.78, 1.00 },
+}
+
 -- Unpack a palette entry: local r,g,b = Vigil:RGB("kick")
 function Vigil:RGB(key)
+    if key == "kick" and self.db then
+        local a = self.accents[self.db.accent]
+        if a then return a[1], a[2], a[3] end
+    end
     local c = self.colors[key]
     return c[1], c[2], c[3]
 end

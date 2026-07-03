@@ -54,6 +54,18 @@ local kickPop = function(kf, elapsed)
     end
 end
 
+-- the spell icon lands with a quick settle (1.3 -> 1 over 0.12s)
+local iconPop = function(fr, elapsed)
+    fr.t = fr.t + elapsed
+    local p = fr.t / 0.12
+    if p >= 1 then
+        fr:SetScale(1)
+        fr:SetScript("OnUpdate", nil)
+    else
+        fr:SetScale(1.3 - 0.3 * p)
+    end
+end
+
 -- The call-to-action defaults to CENTERED ON THE HEALTH BAR — the visual
 -- center of the plate, where nothing else lives (aura row is above, mana/cast
 -- bar are below). Covering the HP text for the moment you're deciding to kick
@@ -137,7 +149,7 @@ local function CreateOverlay()
     local a = ag:CreateAnimation("Alpha")
     a:SetFromAlpha(1.0); a:SetToAlpha(0.25); a:SetDuration(0.5); a:SetSmoothing("IN_OUT")
     ag:SetLooping("BOUNCE")
-    f.glow, f.glowAnim = glow, ag
+    f.glow, f.glowAnim, f.glowTex = glow, ag, gtex
 
     -- cast bar
     local cb = CreateFrame("StatusBar", nil, f)
@@ -160,6 +172,14 @@ local function CreateOverlay()
     spark:SetBlendMode("ADD")
     spark:SetSize(12, 22)
     cb.spark = spark
+
+    -- 1px glass highlight along the top, matching the health-bar skin
+    local glass = cb:CreateTexture(nil, "OVERLAY")
+    glass:SetTexture(Vigil.WHITE)
+    glass:SetVertexColor(1, 1, 1, 0.10)
+    glass:SetPoint("TOPLEFT", cb, 0, 0)
+    glass:SetPoint("TOPRIGHT", cb, 0, 0)
+    glass:SetHeight(1)
 
     -- cast time remaining, right-aligned inside the bar
     local timeText = cb:CreateFontString(nil, "OVERLAY")
@@ -214,6 +234,7 @@ local function CreateOverlay()
     function f:ShowKick(label)
         self.kickText:SetText(label or "INTERRUPT")
         self.kickText:SetTextColor(Vigil:RGB("kick")) -- may be red from a WASTED flash
+        self.glowTex:SetVertexColor(Vigil:RGB("kick")) -- accent-aware, per show
         local kf = self.kickF
         if not kf:IsShown() then
             kf.t = 0
@@ -275,6 +296,8 @@ local function CreateOverlay()
         cb:SetAlpha(1)
         self.iconF:Hide()
         self.iconF:SetAlpha(1)
+        self.iconF:SetScale(1)
+        self.iconF:SetScript("OnUpdate", nil)
         self:HideKick()
         self.padlock:Hide()
         self.timeText:SetText("")
@@ -299,7 +322,11 @@ local function CreateOverlay()
         cb:SetStatusBarColor(Vigil:RGB(channeling and "channel" or "cast"))
         self.padlock:Hide()
         self:HideKick()
-        self.iconF:Show()
+        local ic = self.iconF
+        ic:Show()
+        ic.t = 0
+        ic:SetScale(1.3)
+        ic:SetScript("OnUpdate", iconPop)
         cb:Show()
         cb:SetScript("OnUpdate", cb.onUpdate)
     end

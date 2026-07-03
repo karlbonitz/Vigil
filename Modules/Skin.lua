@@ -62,6 +62,89 @@ local function applyBarColor(uf)
 end
 
 -- ---------------------------------------------------------------------------
+-- Damage bites: when health drops, a bright sliver marks the lost segment and
+-- fades out — incoming damage becomes readable at a glance. Textures are
+-- pooled per-frame; ONE shared driver animates them and hides itself when
+-- nothing is fading, so the idle cost is zero.
+-- ---------------------------------------------------------------------------
+local BITE_TIME = 0.4
+local bites = {}
+local biteDriver = CreateFrame("Frame")
+biteDriver:Hide()
+biteDriver:SetScript("OnUpdate", function(_, elapsed)
+    for i = #bites, 1, -1 do
+        local b = bites[i]
+        b.t = b.t - elapsed
+        if b.t <= 0 then
+            b.tex:Hide()
+            b.pool[#b.pool + 1] = b.tex
+            table.remove(bites, i)
+        else
+            b.tex:SetAlpha((b.t / BITE_TIME) * 0.7)
+        end
+    end
+    if #bites == 0 then biteDriver:Hide() end
+end)
+
+local function spawnBite(uf, fromV, toV, max)
+    local hb = uf.healthBar
+    local w = hb:GetWidth()
+    if not w or w <= 0 or not max or max <= 0 then return end
+    local x1 = (toV / max) * w
+    local width = ((fromV - toV) / max) * w
+    if width < 1 then return end
+    local pool = uf.__vigilBitePool
+    local tex = table.remove(pool)
+    if not tex then
+        tex = hb:CreateTexture(nil, "OVERLAY", nil, 2)
+        tex:SetTexture(Vigil.WHITE)
+    end
+    tex:ClearAllPoints()
+    tex:SetPoint("TOPLEFT", hb, "TOPLEFT", x1, 0)
+    tex:SetPoint("BOTTOMLEFT", hb, "BOTTOMLEFT", x1, 0)
+    tex:SetWidth(math.min(width, w - x1))
+    tex:SetVertexColor(1, 0.9, 0.75)
+    tex:SetAlpha(0.7)
+    tex:Show()
+    bites[#bites + 1] = { tex = tex, t = BITE_TIME, pool = pool, uf = uf }
+    biteDriver:Show()
+end
+
+-- retire any in-flight bites on a frame (it's being recycled for a new unit)
+local function purgeBites(uf)
+    for i = #bites, 1, -1 do
+        local b = bites[i]
+        if b.uf == uf then
+            b.tex:Hide()
+            b.pool[#b.pool + 1] = b.tex
+            table.remove(bites, i)
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Execute marker: a faint tick at 20% that lights up (with red HP text) once
+-- the mob is in execute range. Useful for every class; pretty for all of them.
+-- ---------------------------------------------------------------------------
+local EXEC_PCT = 0.20
+
+local function updateExec(uf)
+    local ex = uf.__vigilExec
+    if not ex then return end
+    if not (active() and Vigil.db.executeMark) then ex:Hide(); return end
+    local hb = uf.healthBar
+    local v = hb:GetValue() or 0
+    local _, max = hb:GetMinMaxValues()
+    if not max or max <= 0 then ex:Hide(); return end
+    ex:Show()
+    if v / max <= EXEC_PCT then
+        ex:SetVertexColor(1, 0.35, 0.30, 0.95) -- in execute range: lit
+    else
+        ex:SetVertexColor(1, 1, 1, 0.22)       -- waiting: a quiet tick
+    end
+end
+
+-- ---------------------------------------------------------------------------
 -- Health text
 -- ---------------------------------------------------------------------------
 local function fmtNum(n)
@@ -86,6 +169,26 @@ local function updateHealthText(uf)
         fs:SetText(fmtNum(v))
     else -- "both"
         fs:SetFormattedText("%s · %d%%", fmtNum(v), math.floor(v / max * 100 + 0.5))
+    end
+    -- execute-range urgency rides the HP text too
+    if Vigil.db.executeMark and v / max <= EXEC_PCT then
+        fs:SetTextColor(1, 0.35, 0.30, 1)
+    else
+        fs:SetTextColor(1, 1, 1, 0.95)
+    end
+end
+
+-- one handler for everything that reacts to the bar moving
+local function onHealthChanged(uf)
+    updateHealthText(uf)
+    updateExec(uf)
+    local hb = uf.healthBar
+    local v = hb:GetValue() or 0
+    local last = uf.__vigilLastV
+    uf.__vigilLastV = v
+    if Vigil.db.bites and active() and last and v < last then
+        local _, max = hb:GetMinMaxValues()
+        spawnBite(uf, last, v, max)
     end
 end
 
@@ -202,9 +305,41 @@ local function build(uf)
     mana:Hide()
     uf.__vigilMana = mana
 
-    -- keep the text live as the bar moves (HookScript = taint-safe post-hooks)
-    hb:HookScript("OnValueChanged", function() updateHealthText(uf) end)
-    hb:HookScript("OnMinMaxChanged", function() updateHealthText(uf) end)
+    -- 1px glass highlight along the bar's top edge (a quiet "lit" look)
+    local glass = hb:CreateTexture(nil, "OVERLAY", nil, 1)
+    glass:SetTexture(Vigil.WHITE)
+    glass:SetVertexColor(1, 1, 1, 0.10)
+    glass:SetPoint("TOPLEFT", hb, 0, 0)
+    glass:SetPoint("TOPRIGHT", hb, 0, 0)
+    glass:SetHeight(1)
+    uf.__vigilGlass = glass
+
+    -- execute tick at 20% (positioned in applySkin once the width is known)
+    local ex = hb:CreateTexture(nil, "OVERLAY", nil, 1)
+    ex:SetTexture(Vigil.WHITE)
+    ex:SetVertexColor(1, 1, 1, 0.22)
+    ex:SetWidth(1)
+    ex:Hide()
+    uf.__vigilExec = ex
+
+    -- mouseover wash (shown/hidden by the hover watcher)
+    local hov = hb:CreateTexture(nil, "OVERLAY", nil, 3)
+    hov:SetTexture(Vigil.WHITE)
+    hov:SetBlendMode("ADD")
+    hov:SetAllPoints(hb)
+    hov:SetVertexColor(1, 1, 1, 0.12)
+    hov:Hide()
+    uf.__vigilHover = hov
+
+    -- bite-texture pool (see spawnBite)
+    uf.__vigilBitePool = {}
+
+    -- keep text/exec/bites live as the bar moves (HookScript = taint-safe)
+    hb:HookScript("OnValueChanged", function() onHealthChanged(uf) end)
+    hb:HookScript("OnMinMaxChanged", function()
+        uf.__vigilLastV = nil -- unit swap: don't bite across different mobs
+        onHealthChanged(uf)
+    end)
 
     -- keep class colors in place when Blizzard re-asserts reaction color
     hooksecurefunc(hb, "SetStatusBarColor", function(bar, r, g, b)
@@ -274,7 +409,21 @@ local function applySkin(uf)
     uf.__vigilShadow:Show()
     uf.__vigilBG:Show()
     uf.__vigilBorder:Show()
+    uf.__vigilGlass:Show()
     setBlizzDecor(uf, false)
+
+    -- fresh unit on this frame: no cross-mob bites, exec tick at 20% of width
+    purgeBites(uf)
+    uf.__vigilLastV = uf.healthBar:GetValue()
+    local w = uf.healthBar:GetWidth()
+    if w and w > 0 then
+        local ex = uf.__vigilExec
+        ex:ClearAllPoints()
+        ex:SetPoint("TOP", uf.healthBar, "TOPLEFT", w * EXEC_PCT, 0)
+        ex:SetPoint("BOTTOM", uf.healthBar, "BOTTOMLEFT", w * EXEC_PCT, 0)
+    end
+    updateExec(uf)
+    uf.__vigilHover:Hide()
     if uf.name then
         uf.name:SetFont(STANDARD_TEXT_FONT, Vigil.db.nameSize or 10, "OUTLINE")
         local r, g, b = classColor(uf.unit)
@@ -307,6 +456,11 @@ local function removeSkin(uf)
     uf.__vigilBG:Hide()
     uf.__vigilBorder:Hide()
     uf.__vigilTargetGlow:Hide()
+    uf.__vigilGlass:Hide()
+    uf.__vigilExec:Hide()
+    uf.__vigilHover:Hide()
+    purgeBites(uf)
+    uf:SetAlpha(1)
     uf.__vigilHP:SetText("")
     uf.__vigilLvl:SetText("")
     uf.__vigilMana:Hide()
@@ -319,6 +473,18 @@ local function removeSkin(uf)
             applying = true
             hb:SetStatusBarColor(r, g, b)
             applying = false
+        end
+    end
+end
+
+-- Dim every non-target plate slightly while a target exists, so the kill
+-- target reads instantly. Bars only — the cast overlay (and its INTERRUPT
+-- cue) never dims: an off-target kick window still deserves full volume.
+local function applyFocusDim()
+    local dimming = active() and Vigil.db.focusDim and UnitExists("target")
+    for unit, uf in pairs(skinned) do
+        if uf.__vigilSkinned then
+            uf:SetAlpha((dimming and not UnitIsUnit(unit, "target")) and 0.85 or 1)
         end
     end
 end
@@ -341,6 +507,7 @@ function M:RefreshAll()
             end
         end
     end
+    applyFocusDim()
 end
 
 function M:OnEnable()
@@ -354,6 +521,10 @@ function M:OnEnable()
         if shouldSkin(unit) then
             applySkin(uf)
             skinned[unit] = uf
+            -- a plate spawning mid-fight inherits the current focus state
+            if Vigil.db.focusDim and UnitExists("target") and not UnitIsUnit(unit, "target") then
+                uf:SetAlpha(0.85)
+            end
         elseif uf.__vigilSkinned then
             -- Blizzard recycled a frame we skinned earlier for a unit we must
             -- NOT skin (personal resource bar, or friendlies toggled off) —
@@ -370,6 +541,34 @@ function M:OnEnable()
         if not active() then return end
         for _, uf in pairs(skinned) do
             if uf.__vigilSkinned then updateHighlight(uf) end
+        end
+        applyFocusDim()
+    end)
+
+    -- mouseover wash: light up the hovered plate; a light pulse (piggybacking
+    -- the shared frame's OnUpdate) retires it once the mouse moves off
+    local hovered
+    Vigil:RegisterEvent("UPDATE_MOUSEOVER_UNIT", function()
+        if hovered then hovered.__vigilHover:Hide(); hovered = nil end
+        if not active() then return end
+        for unit, uf in pairs(skinned) do
+            if uf.__vigilSkinned and UnitIsUnit(unit, "mouseover") then
+                uf.__vigilHover:Show()
+                hovered = uf
+                return
+            end
+        end
+    end)
+    local hoverAccum = 0
+    Vigil.frame:HookScript("OnUpdate", function(_, elapsed)
+        if not hovered then return end
+        hoverAccum = hoverAccum + elapsed
+        if hoverAccum < 0.15 then return end
+        hoverAccum = 0
+        local unit = hovered.unit
+        if not (unit and UnitExists("mouseover") and UnitIsUnit(unit, "mouseover")) then
+            hovered.__vigilHover:Hide()
+            hovered = nil
         end
     end)
 

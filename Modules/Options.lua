@@ -34,15 +34,24 @@ function M:OnEnable()
     local panel = CreateFrame("Frame")
     panel.name = "Vigil"
 
+    -- everything lives on a scrollable content frame — the option set outgrew
+    -- the legacy InterfaceOptions canvas, and scrolling ends that arms race
+    local scroll = CreateFrame("ScrollFrame", wname(), panel, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 0, -4)
+    scroll:SetPoint("BOTTOMRIGHT", -27, 4)
+    local content = CreateFrame("Frame")
+    content:SetSize(590, 700)
+    scroll:SetScrollChild(content)
+
     local checks, sliders = {}, {}
-    local healthTextDD, labelDD -- forward refs for refresh()
+    local healthTextDD, labelDD, accentDD -- forward refs for refresh()
 
     -- ---- widget factories -------------------------------------------------
     local function header(text, y)
-        local h = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        local h = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
         h:SetPoint("TOPLEFT", PAD, y)
         h:SetText(text)
-        local line = panel:CreateTexture(nil, "ARTWORK")
+        local line = content:CreateTexture(nil, "ARTWORK")
         line:SetTexture(Vigil.WHITE)
         line:SetVertexColor(1, 0.82, 0.1, 0.25)
         line:SetHeight(1)
@@ -52,7 +61,7 @@ function M:OnEnable()
     end
 
     local function check(x, y, key, label, tip, onChange)
-        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
         cb:SetPoint("TOPLEFT", x, y)
         cb:SetSize(22, 22)
         local text = cb:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -78,7 +87,7 @@ function M:OnEnable()
 
     local function slider(x, y, key, label, minV, maxV, step, fmt, onChange)
         local name = wname()
-        local s = CreateFrame("Slider", name, panel, "OptionsSliderTemplate")
+        local s = CreateFrame("Slider", name, content, "OptionsSliderTemplate")
         s:SetPoint("TOPLEFT", x + 6, y - 12)
         s:SetWidth(230)
         s:SetMinMaxValues(minV, maxV)
@@ -99,20 +108,20 @@ function M:OnEnable()
     end
 
     -- ---- title row ---------------------------------------------------------
-    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", PAD, -16)
     title:SetText("Vigil")
 
-    local sub = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    local sub = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
     sub:SetText("Interrupt-smart nameplates  ·  v" .. Vigil.version)
 
-    local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    local reset = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     reset:SetSize(140, 22)
     reset:SetPoint("TOPRIGHT", -PAD, -16)
     reset:SetText("Reset to defaults")
 
-    local export = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    local export = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     export:SetSize(110, 22)
     export:SetPoint("RIGHT", reset, "LEFT", -6, 0)
     export:SetText("Export data…")
@@ -138,9 +147,47 @@ function M:OnEnable()
         "Difficulty-colored level inside the bar's left edge. \"+\" = elite, \"r\" = rare, red ?? = skull/boss.", refreshSkin)
     check(COL2, y, "manaBar", "Mana bar on casters",
         "Slim blue bar under the health bar, shown only for units that actually use mana.", refreshSkin)
+    y = y - 24
+    check(PAD, y, "bites", "Damage flashes",
+        "A bright sliver marks health the mob just lost, then fades — incoming damage reads at a glance.")
+    check(COL2, y, "focusDim", "Dim other plates when targeting",
+        "Non-target plates drop slightly in opacity while you have a target, so your kill target reads instantly. Cues never dim.", refreshSkin)
+    y = y - 24
+    check(PAD, y, "executeMark", "Execute mark at 20%",
+        "A quiet tick on the health bar that lights up red (with the HP text) once the mob is in execute range.", refreshSkin)
+
+    local accLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    accLabel:SetPoint("TOPLEFT", COL2 + 4, y - 5)
+    accLabel:SetText("Accent")
+    local ACC_CHOICES = {
+        { "gold",   "Gold" },
+        { "teal",   "Teal" },
+        { "violet", "Violet" },
+        { "ice",    "Ice" },
+    }
+    local function accText(v)
+        for _, c in ipairs(ACC_CHOICES) do if c[1] == v then return c[2] end end
+        return ACC_CHOICES[1][2]
+    end
+    accentDD = CreateFrame("Frame", wname(), content, "UIDropDownMenuTemplate")
+    accentDD:SetPoint("LEFT", accLabel, "RIGHT", -8, -2)
+    UIDropDownMenu_SetWidth(accentDD, 90)
+    UIDropDownMenu_Initialize(accentDD, function()
+        for _, c in ipairs(ACC_CHOICES) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = c[2]
+            info.checked = (Vigil.db.accent == c[1])
+            info.func = function()
+                Vigil.db.accent = c[1]
+                UIDropDownMenu_SetText(accentDD, c[2])
+                refreshSkin() -- target outline re-tints; glow/label follow on next cue
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
     y = y - 26
 
-    local ddLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    local ddLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     ddLabel:SetPoint("TOPLEFT", PAD + 4, y - 5)
     ddLabel:SetText("Health text")
     local HT_CHOICES = {
@@ -153,7 +200,7 @@ function M:OnEnable()
         for _, c in ipairs(HT_CHOICES) do if c[1] == v then return c[2] end end
         return HT_CHOICES[1][2]
     end
-    healthTextDD = CreateFrame("Frame", wname(), panel, "UIDropDownMenuTemplate")
+    healthTextDD = CreateFrame("Frame", wname(), content, "UIDropDownMenuTemplate")
     healthTextDD:SetPoint("LEFT", ddLabel, "RIGHT", -8, -2)
     UIDropDownMenu_SetWidth(healthTextDD, 100)
     UIDropDownMenu_Initialize(healthTextDD, function()
@@ -224,7 +271,7 @@ function M:OnEnable()
     slider(PAD, y, "scale", "Overlay scale", 0.7, 1.5, 0.05, "%.2f", applyScale)
 
     -- cue label position, sharing the slider's row (keeps the panel short)
-    local lpLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    local lpLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     lpLabel:SetPoint("TOPLEFT", COL2 + 4, y - 5)
     lpLabel:SetText("Cue label")
     local LP_CHOICES = {
@@ -235,7 +282,7 @@ function M:OnEnable()
         for _, c in ipairs(LP_CHOICES) do if c[1] == v then return c[2] end end
         return LP_CHOICES[1][2]
     end
-    labelDD = CreateFrame("Frame", wname(), panel, "UIDropDownMenuTemplate")
+    labelDD = CreateFrame("Frame", wname(), content, "UIDropDownMenuTemplate")
     labelDD:SetPoint("LEFT", lpLabel, "RIGHT", -8, -2)
     UIDropDownMenu_SetWidth(labelDD, 110)
     UIDropDownMenu_Initialize(labelDD, function()
@@ -264,6 +311,7 @@ function M:OnEnable()
         end
         UIDropDownMenu_SetText(healthTextDD, htLabel(Vigil.db.healthText))
         UIDropDownMenu_SetText(labelDD, lpText(Vigil.db.labelPos))
+        UIDropDownMenu_SetText(accentDD, accText(Vigil.db.accent))
     end
 
     reset:SetScript("OnClick", function()

@@ -17,10 +17,13 @@ And it looks the part: a full custom skin — smooth gradient health bars with a
 soft drop shadow, crisp 1px borders, class colors on players, level text, a
 slim mana bar on casters, health text, a gold outline + glow on your current
 target, a bordered-icon cast bar with a live countdown, and DoT timers with
-dispel-colored borders and a draining cooldown swipe. Friendly plates get the
-same skin when Blizzard shows them. Every piece is configurable from the
-options panel (`/vigil`), and the defaults are tuned to look great with zero
-setup.
+dispel-colored borders and a draining cooldown swipe. Plates *react*, too:
+damage flashes bite out of the bar as mobs lose health, the plate under your
+cursor lights up, non-target plates dim so your kill target reads instantly,
+and an execute tick lights up at 20%. Four accent themes (Gold / Teal /
+Violet / Ice) re-skin the cue in one click. Friendly plates get the same skin
+when Blizzard shows them. Every piece is configurable from the options panel
+(`/vigil`), and the defaults are tuned to look great with zero setup.
 
 > Dependency-free by design (no libraries), so it loads instantly. Shareable
 > "Intel Pack" import strings and the Vigil Parse data layer are the next
