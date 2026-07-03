@@ -170,7 +170,14 @@ function M:Refresh(unit)
     local row = rows[unit] or acquireRow()
     rows[unit] = row
     row:ClearAllPoints()
-    row:SetPoint("BOTTOM", overlay.plate, "TOP", 0, 6) -- sits above the nameplate
+    -- hug the NAME, not the plate frame: the plate's invisible rect extends
+    -- well above the visible bar, which left the row floating in the air
+    local uf = overlay.plate.UnitFrame
+    if uf and uf.name then
+        row:SetPoint("BOTTOM", uf.name, "TOP", 0, 3)
+    else
+        row:SetPoint("BOTTOM", overlay.plate, "TOP", 0, 6)
+    end
     -- a row (re)appearing mid-fight inherits the current focus fade
     if Vigil.Skin and Vigil.Skin.CurrentDim then
         row:SetAlpha(Vigil.Skin.CurrentDim(unit))

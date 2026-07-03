@@ -19,6 +19,14 @@ live, with zero-config defaults unchanged:
   edges, accent-gold thumb, aligned min/max labels) — the client's stock
   slider template renders with no track art on 2.5.5, leaving the thumb
   floating over nothing.
+- **Readable bars** (from a live screenshot): the gradient fill texture was
+  rebuilt much flatter (0.86→1.00 instead of 0.62→1.00) — the old curve
+  multiplied the bottom of every bar toward black, turning hostile red and
+  the group-aggro slate into unreadable mud in dark zones. Colors now read
+  true, with just a hint of top-lit sheen.
+- **Aura row hugs the plate**: DoT icons now anchor just above the NAME
+  instead of the plate frame's invisible top edge, which left them floating
+  in mid-air above the stack.
 - **Vigil Parse: the roster.** Parse now profiles every FRIENDLY player it
   witnesses landing an interrupt — grouped with you or just nearby: name,
   class, lifetime kicks (and how many while in your groups), favorite tool,
