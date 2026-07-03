@@ -535,14 +535,26 @@ local function applySkin(uf, unit)
     uf.__vigilHideCast = (Vigil.db.showCastbar and u
         and UnitCanAttack("player", u)) or false
     local bcb = blizzCastBar(uf)
-    if uf.__vigilHideCast and bcb and bcb:IsShown() then
-        bcb:Hide()
+    if uf.__vigilHideCast and bcb then
+        -- Blizzard's own suppression idiom on 2.5.5+: detach the unit, which
+        -- unregisters the cast bar's events AND hides it. Blizzard re-arms it
+        -- on every plate add, so this runs per applySkin. The OnShow hook in
+        -- build() stays as the fallback for clients without SetUnit.
+        if bcb.SetUnit then bcb:SetUnit(nil, nil, nil) end
+        if bcb:IsShown() then bcb:Hide() end
     end
 end
 
 local function removeSkin(uf)
     if not uf or not uf.__vigilSkinned then return end
     uf.__vigilHideCast = false -- hand the plate cast bar back to Blizzard
+    -- re-arm what applySkin detached; Blizzard's own uf.unit is the
+    -- authority here (on a recycled frame our stored token is the OLD unit)
+    local bcb = blizzCastBar(uf)
+    local u0 = uf.unit or uf.__vigilUnit
+    if bcb and bcb.SetUnit and u0 and UnitExists(u0) then
+        bcb:SetUnit(u0, false, false)
+    end
     local hb = uf.healthBar
     if uf.__vigilOrigTex then hb:SetStatusBarTexture(uf.__vigilOrigTex) end
     uf.__vigilShadow:Hide()

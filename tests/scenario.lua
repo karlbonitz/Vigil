@@ -38,6 +38,7 @@ local function spawnMob(token, name, opts)
     opts = opts or {}
     local plate = H.MakePlate()
     plate.UnitFrame.unit = token -- Blizzard sets this on real 2.5.x plates
+    plate.UnitFrame.castBar:SetUnit(token, false, false) -- Blizzard arms it per add
     H.units[token] = {
         name = name, guid = opts.guid or MOB_GUID, level = opts.level or 70,
         hostile = true, isPlayer = opts.isPlayer or false,
@@ -71,6 +72,7 @@ ok(not o.iconF:IsShown(), "fresh overlay's icon hidden before any cast")
 -- 2b. Blizzard's own plate cast bar (lowercase castBar on 2.5.5+) stays
 -- suppressed while we own cast bars
 local blizzCB = H.units.nameplate1.plate.UnitFrame.castBar
+eq(blizzCB.__unit, nil, "Blizzard cast bar detached (SetUnit nil) on skinned enemy")
 blizzCB:Hide()
 blizzCB:Show() -- Blizzard would Show it when the mob starts casting
 ok(not blizzCB:IsShown(), "Blizzard plate cast bar suppressed on skinned enemy")
@@ -92,8 +94,10 @@ eq(blizzBorder.__alpha, 1, "rounded border alpha restored when skin off")
 eq(blizzUF.LevelFrame.__alpha, 1, "Blizzard level frame restored when skin off")
 eq(blizzUF.selectionHighlight.__alpha, 0.25, "selection highlight restored when skin off")
 eq(blizzUF.healthBar.background.__alpha, 0.85, "stock bar background restored when skin off")
+eq(blizzCB.__unit, "nameplate1", "Blizzard cast bar re-armed when skin off")
 SlashCmdList["VIGIL"]("skin") -- back on
 eq(blizzBorder.__alpha, 0, "rounded border re-suppressed when skin back on")
+eq(blizzCB.__unit, nil, "Blizzard cast bar re-detached when skin back on")
 
 -- 3. Kickable cast starts (live API path): Greater Heal is in the Intel Pack
 H.units.nameplate1.casting = {

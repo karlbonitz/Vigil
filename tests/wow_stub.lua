@@ -246,6 +246,12 @@ function Frame.SetFocus() end
 function Frame.ClearFocus() end
 function Frame.SetScrollChild() end
 
+-- CastingBar mixin surface (2.5.5+): SetUnit(nil) detaches + hides
+function Frame.SetUnit(self, unit)
+    self.__unit = unit
+    if not unit then self:Hide() end
+end
+
 -- Cooldown
 function Frame.SetCooldown() end
 function Frame.SetReverse() end
