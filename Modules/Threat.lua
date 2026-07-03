@@ -31,14 +31,19 @@ local function colorForStatus(unit)
 end
 
 local function update()
-    if not Vigil.db.threat then return end
     for unit, overlay in pairs(Vigil.plates) do
-        local key = colorForStatus(unit)
+        -- keep running with the toggle off so stale strips/borders CLEAR
+        local key = Vigil.db.threat and colorForStatus(unit) or nil
         if key then
             overlay.threatStrip:SetVertexColor(Vigil:RGB(key))
             overlay.threatStrip:Show()
         else
             overlay.threatStrip:Hide()
+        end
+        -- the same state colors the plate border (Skin decides precedence —
+        -- your target's accent border always wins over threat)
+        if Vigil.Skin and Vigil.Skin.SetThreat then
+            Vigil.Skin:SetThreat(unit, key)
         end
     end
 end

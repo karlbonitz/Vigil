@@ -8,9 +8,14 @@ purely additive decoration on Blizzard's plates (no taint, no replacement).
 - **Damage bites**: when a mob loses health, a bright sliver marks the lost
   segment and fades out — incoming damage reads at a glance. Pooled textures
   and one self-stopping animation driver, so idle cost is zero.
-- **Focus dim**: while you have a target, other plates drop to 85% opacity so
-  your kill target reads instantly. Cast bars and interrupt cues NEVER dim —
-  an off-target kick window still gets full volume.
+- **Focus fade**: while you have a target, everything else — bars, cast
+  overlays, DoT rows — fades to 50% opacity (tunable via the "Non-target
+  fade" slider), so the selected enemy is unmistakable. One exception, by
+  design: a live INTERRUPT cue never fades, even on a non-target.
+- **Aggro borders**: the plate border now speaks threat — red when a mob is
+  on you (or you're about to pull), and in tank mode green = safely tanking,
+  red = losing the mob. Your target's accent border always wins. Governed by
+  the existing Threat tint toggle; the strip stays too.
 - **Mouseover wash**: the plate under your cursor lights up softly.
 - **Execute mark**: a quiet tick at 20% health that lights up red — along
   with the HP text — once the mob is in execute range. Every class knows the

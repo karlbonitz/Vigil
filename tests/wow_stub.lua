@@ -335,6 +335,14 @@ function UnitIsFriend(_, t) local u = U(t); return u and not u.hostile end
 function UnitAffectingCombat() return false end
 function UnitIsTapDenied() return false end
 
+-- threat: driven by unit.threat = {isTanking, status, pct} (nil = no table)
+function UnitDetailedThreatSituation(_, t)
+    local u = U(t)
+    local th = u and u.threat
+    if not th then return nil end
+    return th.isTanking or false, th.status, th.pct
+end
+
 function UnitCastingInfo(t)
     local u = U(t)
     local c = u and u.casting

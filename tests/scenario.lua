@@ -189,8 +189,27 @@ hb1:SetValue(15)              -- into execute range
 ok(uf1.__vigilExec.__vg < 0.5, "execute tick lit below 20%")
 
 H.FireEvent("PLAYER_TARGET_CHANGED") -- target is nameplate1
-eq(uf2.__alpha, 0.85, "non-target plate dimmed")
+eq(uf2.__alpha, 0.5, "non-target plate faded to focusAlpha")
 eq(uf1.__alpha, 1, "target plate at full opacity")
+eq(o2.__alpha, 0.5, "non-target cast overlay faded too")
+
+-- aggro state colors the border: nameplate2 (non-target) pulls aggro -> red
+H.units.nameplate2.threat = { isTanking = true, status = 3, pct = 100 }
+H.FireEvent("UNIT_THREAT_LIST_UPDATE")
+H.Advance(0.3)
+local b2 = uf2.__vigilBorder.edges[1]
+ok(b2.__vr and b2.__vr > 0.8 and b2.__vg < 0.4, "aggro on non-target: red border")
+-- the TARGET keeps its accent border even with aggro
+H.units.nameplate1.threat = { isTanking = true, status = 3, pct = 100 }
+H.FireEvent("UNIT_THREAT_LIST_UPDATE")
+H.Advance(0.3)
+local b1 = uf1.__vigilBorder.edges[1]
+ok(b1.__vg and b1.__vg > 0.5, "target keeps accent border over threat")
+-- threat gone -> border back to black
+H.units.nameplate2.threat = nil
+H.FireEvent("UNIT_THREAT_LIST_UPDATE")
+H.Advance(0.3)
+ok(b2.__vr == 0 and b2.__vg == 0, "border clears when threat drops")
 
 H.alias.mouseover = "nameplate2"
 H.FireEvent("UPDATE_MOUSEOVER_UNIT")

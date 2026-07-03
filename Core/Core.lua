@@ -63,7 +63,8 @@ local defaults = {
     auraDispel   = true,   -- color aura borders by dispel type (magic/curse/…)
     skin         = true,   -- custom nameplate skin (clean bar + border + target outline)
     bites        = true,   -- "damage bite" flash: a bright sliver marks health just lost
-    focusDim     = true,   -- dim non-target plates slightly while you have a target
+    focusDim     = true,   -- fade non-target plates while you have a target
+    focusAlpha   = 0.5,    -- how far non-targets fade (lower = stronger fade)
     executeMark  = true,   -- 20% execute tick on the health bar (+ red HP text below it)
     accent       = "gold", -- accent theme: gold | teal | violet | ice
     friendly     = true,   -- also skin FRIENDLY plates (when Blizzard shows them)

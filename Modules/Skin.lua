@@ -385,18 +385,32 @@ local function setBlizzDecor(uf, shown)
     end
 end
 
--- Gold outline + glow on the plate you're targeting; plain black otherwise.
+-- Border speaks in this order: your target (accent) > threat state (red =
+-- aggro on you / amber = pulling / green = safely tanking in tank mode) >
+-- plain black. Threat.lua feeds the state via SetThreat below.
 local function updateHighlight(uf)
     if not uf.__vigilBorder then return end
     local isTarget = uf.unit and UnitIsUnit(uf.unit, "target")
     if isTarget then
         uf.__vigilBorder:SetColor(Vigil:RGB("kick"))
+    elseif uf.__vigilThreat then
+        uf.__vigilBorder:SetColor(Vigil:RGB(uf.__vigilThreat))
     else
         uf.__vigilBorder:SetColor(0, 0, 0, 1)
     end
     local tg = uf.__vigilTargetGlow
     if tg then
         if isTarget and Vigil.db.targetGlow then tg:Show() else tg:Hide() end
+    end
+end
+
+-- Threat.lua pushes each plate's aggro state here (a palette key, or nil).
+function M:SetThreat(unit, key)
+    local uf = skinned[unit]
+    if not (uf and uf.__vigilSkinned) then return end
+    if uf.__vigilThreat ~= key then
+        uf.__vigilThreat = key
+        updateHighlight(uf)
     end
 end
 
@@ -412,8 +426,9 @@ local function applySkin(uf)
     uf.__vigilGlass:Show()
     setBlizzDecor(uf, false)
 
-    -- fresh unit on this frame: no cross-mob bites, exec tick at 20% of width
+    -- fresh unit on this frame: no cross-mob bites, no stale threat border
     purgeBites(uf)
+    uf.__vigilThreat = nil
     uf.__vigilLastV = uf.healthBar:GetValue()
     local w = uf.healthBar:GetWidth()
     if w and w > 0 then
@@ -460,6 +475,7 @@ local function removeSkin(uf)
     uf.__vigilExec:Hide()
     uf.__vigilHover:Hide()
     purgeBites(uf)
+    uf.__vigilThreat = nil
     uf:SetAlpha(1)
     uf.__vigilHP:SetText("")
     uf.__vigilLvl:SetText("")
@@ -477,17 +493,33 @@ local function removeSkin(uf)
     end
 end
 
--- Dim every non-target plate slightly while a target exists, so the kill
--- target reads instantly. Bars only — the cast overlay (and its INTERRUPT
--- cue) never dims: an off-target kick window still deserves full volume.
+-- Focus fade: while a target exists, everything that isn't it fades hard
+-- (db.focusAlpha, default 0.5) so the selected enemy is unmistakable. The
+-- whole plate family follows — bar, cast overlay, DoT row — with ONE
+-- exception: a live kick cue always gets full volume, even off-target.
+
+-- the alpha this unit should wear right now (also used by late spawners)
+local function currentDim(unit)
+    if not (active() and Vigil.db.focusDim and UnitExists("target")) then return 1 end
+    if UnitIsUnit(unit, "target") then return 1 end
+    return Vigil.db.focusAlpha or 0.5
+end
+M.CurrentDim = currentDim
+
 local function applyFocusDim()
-    local dimming = active() and Vigil.db.focusDim and UnitExists("target")
     for unit, uf in pairs(skinned) do
         if uf.__vigilSkinned then
-            uf:SetAlpha((dimming and not UnitIsUnit(unit, "target")) and 0.85 or 1)
+            uf:SetAlpha(currentDim(unit))
         end
     end
+    for unit, o in pairs(Vigil.plates or {}) do
+        local a = currentDim(unit)
+        if o.kickF and o.kickF:IsShown() then a = 1 end -- the cue never fades
+        o:SetAlpha(a)
+        if Vigil.Auras and Vigil.Auras.DimRow then Vigil.Auras:DimRow(unit, a) end
+    end
 end
+M.ApplyFocusDim = applyFocusDim
 
 -- Re-apply or strip the skin across ALL current plates (toggle + option changes).
 function M:RefreshAll()
@@ -522,9 +554,7 @@ function M:OnEnable()
             applySkin(uf)
             skinned[unit] = uf
             -- a plate spawning mid-fight inherits the current focus state
-            if Vigil.db.focusDim and UnitExists("target") and not UnitIsUnit(unit, "target") then
-                uf:SetAlpha(0.85)
-            end
+            uf:SetAlpha(currentDim(unit))
         elseif uf.__vigilSkinned then
             -- Blizzard recycled a frame we skinned earlier for a unit we must
             -- NOT skin (personal resource bar, or friendlies toggled off) —

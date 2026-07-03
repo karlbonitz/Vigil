@@ -171,6 +171,10 @@ function M:Refresh(unit)
     rows[unit] = row
     row:ClearAllPoints()
     row:SetPoint("BOTTOM", overlay.plate, "TOP", 0, 6) -- sits above the nameplate
+    -- a row (re)appearing mid-fight inherits the current focus fade
+    if Vigil.Skin and Vigil.Skin.CurrentDim then
+        row:SetAlpha(Vigil.Skin.CurrentDim(unit))
+    end
 
     local size = iconSize()
     local n = math.min(#scan, maxIcons())
@@ -228,6 +232,12 @@ function M:Refresh(unit)
     row.shown = n
     row:Show()
     updateRow(row)
+end
+
+-- focus fade support: the DoT row fades with its plate (Skin drives this)
+function M:DimRow(unit, a)
+    local row = rows[unit]
+    if row then row:SetAlpha(a) end
 end
 
 function M:Remove(unit)

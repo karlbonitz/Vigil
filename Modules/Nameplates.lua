@@ -235,6 +235,7 @@ local function CreateOverlay()
         self.kickText:SetText(label or "INTERRUPT")
         self.kickText:SetTextColor(Vigil:RGB("kick")) -- may be red from a WASTED flash
         self.glowTex:SetVertexColor(Vigil:RGB("kick")) -- accent-aware, per show
+        self:SetAlpha(1) -- the cue punches through the focus fade, always
         local kf = self.kickF
         if not kf:IsShown() then
             kf.t = 0
@@ -255,6 +256,10 @@ local function CreateOverlay()
         self.kickF:SetScale(1)
         self.glow:Hide()
         self.glowAnim:Stop()
+        -- cue gone: fall back into the focus fade (if one is in effect)
+        if self.unit and Vigil.Skin and Vigil.Skin.CurrentDim then
+            self:SetAlpha(Vigil.Skin.CurrentDim(self.unit))
+        end
     end
 
     -- Brief verdict as a flagged cast resolves: teal KICKED (someone stopped
@@ -344,6 +349,8 @@ local function Release(o)
     o:Reset()
     o.threatStrip:Hide()
     o:Hide()
+    o:SetAlpha(1)
+    o.unit = nil
     o:ClearAllPoints()
     anchorKick(o, nil) -- never leave the label anchored to a recycled plate's bar
     pool[#pool + 1] = o
@@ -381,6 +388,11 @@ function M:OnAdded(unit)
     anchorKick(o, hb)
 
     o:Show()
+    o.unit = unit
+    -- spawning mid-fight inherits the current focus fade
+    if Vigil.Skin and Vigil.Skin.CurrentDim then
+        o:SetAlpha(Vigil.Skin.CurrentDim(unit))
+    end
     Vigil.plates[unit] = o
 
     local guid = UnitGUID(unit)

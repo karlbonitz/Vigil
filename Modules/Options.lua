@@ -40,7 +40,7 @@ function M:OnEnable()
     scroll:SetPoint("TOPLEFT", 0, -4)
     scroll:SetPoint("BOTTOMRIGHT", -27, 4)
     local content = CreateFrame("Frame")
-    content:SetSize(590, 700)
+    content:SetSize(590, 740)
     scroll:SetScrollChild(content)
 
     local checks, sliders = {}, {}
@@ -150,8 +150,8 @@ function M:OnEnable()
     y = y - 24
     check(PAD, y, "bites", "Damage flashes",
         "A bright sliver marks health the mob just lost, then fades — incoming damage reads at a glance.")
-    check(COL2, y, "focusDim", "Dim other plates when targeting",
-        "Non-target plates drop slightly in opacity while you have a target, so your kill target reads instantly. Cues never dim.", refreshSkin)
+    check(COL2, y, "focusDim", "Fade other plates when targeting",
+        "While you have a target, everything else — bars, cast bars, DoT rows — fades to the opacity set below, so the selected enemy is unmistakable. A live INTERRUPT cue never fades.", refreshSkin)
     y = y - 24
     check(PAD, y, "executeMark", "Execute mark at 20%",
         "A quiet tick on the health bar that lights up red (with the HP text) once the mob is in execute range.", refreshSkin)
@@ -186,6 +186,9 @@ function M:OnEnable()
         end
     end)
     y = y - 26
+
+    slider(PAD, y, "focusAlpha", "Non-target fade", 0.2, 0.9, 0.05, "%.2f", refreshSkin)
+    y = y - 44
 
     local ddLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     ddLabel:SetPoint("TOPLEFT", PAD + 4, y - 5)
@@ -260,7 +263,7 @@ function M:OnEnable()
 
     y = header("Threat & general", y)
     check(PAD, y, "threat", "Threat tint",
-        "Colored strip over the cast bar area when you're pulling (or, in tank mode, losing) aggro.")
+        "Aggro state on the plate: colored strip + border — red when a mob is on you or you're about to pull (tank mode: green = safely tanking, red = losing it).")
     check(COL2, y, "tankMode", "Tank mode (invert colors)",
         "Green = securely tanking, red = you lost the mob.")
     y = y - 24
