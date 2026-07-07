@@ -39,6 +39,13 @@ live, with zero-config defaults unchanged:
   `/vigil export`, and each session now tallies who carried the kicks
   (shown in `/vigil parse`). Known limitation: pet interrupts (Felhunter
   Spell Lock) aren't attributed to their owner yet.
+- **The under-plate overlay lines up with the health bar** (from a live
+  screenshot of a stray-looking red aggro strip): the anniversary template
+  insets the health bar asymmetrically in the plate rect (4px left, 21px
+  right), so anchoring to the plate's center put the cast bar, threat
+  strip, and glow ~9px right of the bar. The overlay now anchors to the
+  health bar itself — the strip reads as an attached underline, and the
+  cast bar is truly edge-to-edge.
 
 ## v0.7.0 — the stellar pass
 

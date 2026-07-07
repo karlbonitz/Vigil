@@ -78,8 +78,13 @@ function Region.Show(self) self.__shown = true end
 function Region.Hide(self) self.__shown = false end
 function Region.IsShown(self) return self.__shown end
 function Region.SetShown(self, s) self.__shown = not not s end
-function Region.SetPoint() end
-function Region.ClearAllPoints() end
+function Region.SetPoint(self, point, rel, relPoint, x, y)
+    -- record anchors so scenarios can assert WHAT a frame hangs off
+    self.__anchors = self.__anchors or {}
+    self.__anchors[#self.__anchors + 1] =
+        { point = point, rel = rel, relPoint = relPoint, x = x, y = y }
+end
+function Region.ClearAllPoints(self) self.__anchors = nil end
 function Region.SetAllPoints() end
 function Region.SetSize(self, w, h) self.__w, self.__h = w, h end
 function Region.SetWidth(self, w) self.__w = w end

@@ -422,12 +422,21 @@ function M:OnAdded(unit)
 
     local o = Acquire()
     o:ClearAllPoints()
-    o:SetPoint("TOP", plate, "BOTTOM", 0, -2) -- rides just below the plate; follows it
     o.plate = plate
+
+    -- anchor to the health bar, not the plate: the anniversary template insets
+    -- the bar asymmetrically in the plate rect (4px left / 21px right), so the
+    -- plate's center sits ~9px right of the bar's center — everything hung off
+    -- the plate drifts right of the bar it's supposed to underline
+    local hb = plate.UnitFrame and plate.UnitFrame.healthBar
+    if hb then
+        o:SetPoint("TOP", hb, "BOTTOM", 0, -6) -- same height the plate anchor gave
+    else
+        o:SetPoint("TOP", plate, "BOTTOM", 0, -2)
+    end
 
     -- match the health bar's width so the cast bar aligns edge-to-edge with it
     -- (the icon hangs off the left, Plater-style)
-    local hb = plate.UnitFrame and plate.UnitFrame.healthBar
     local w = hb and hb:GetWidth()
     o:SetWidth((w and w > 60) and w or BAR_W)
     anchorKick(o, hb)

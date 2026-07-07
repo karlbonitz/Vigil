@@ -68,6 +68,13 @@ ok(o ~= nil, "overlay created on plate add")
 -- "ghost grey bar under every new plate" bug found in-game)
 ok(not o.castbar:IsShown(), "fresh overlay's cast bar hidden before any cast")
 ok(not o.iconF:IsShown(), "fresh overlay's icon hidden before any cast")
+-- regression: the overlay hangs off the HEALTH BAR, not the plate frame —
+-- the anniversary template insets the bar asymmetrically (4px L / 21px R),
+-- so a plate-center anchor drifts ~9px right of the bar (seen in-game as an
+-- "out of place" threat strip / cast bar)
+eq(o.__anchors and o.__anchors[1] and o.__anchors[1].rel,
+   H.units.nameplate1.plate.UnitFrame.healthBar,
+   "overlay anchored to the health bar, not the plate")
 
 -- 2b. Blizzard's own plate cast bar (lowercase castBar on 2.5.5+) stays
 -- suppressed while we own cast bars
