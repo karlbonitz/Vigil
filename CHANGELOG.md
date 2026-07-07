@@ -12,6 +12,16 @@
   tool returns, the real shout displaces the hint. Honesty rules: only
   tools a player was *witnessed* using are claimed, and base cooldowns
   mean "ready" is never called early. Toggle: `/vigil party`.
+- **The web report grew three sections** (karlbonitz.github.io/Vigil):
+  **share links** — one click packs the whole report into the URL itself
+  (gzipped, after the `#`, so no server ever sees it) for guild-chat
+  bragging rights, and opening such a link builds the report instantly;
+  **By dungeon** — casts, windows, kills, let-throughs, conversion rate and
+  median reaction per instance (rows have carried the zone since 0.5.0);
+  **Your crew** — the account-wide interrupt roster the addon has been
+  collecting, merged with each import's kicker tallies: who kicks, with
+  what, how often in your groups. The reaction tile now also shows your
+  fastest kick and p90.
 - **The dungeon briefing.** Walk into an instance Vigil has intel on and get
   the kick sheet before the first pull: "Kick on sight: …" and "Never kick: …",
   straight from the Intel Pack's new zone tags (39 entries tagged with the

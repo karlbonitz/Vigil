@@ -174,6 +174,7 @@
 
   <div class="panel" id="importMeta">
     <span class="m" id="importMetaText"></span>
+    <button class="ghost" id="shareBtn" title="Packs this whole report into the link itself (after the #) — nothing is uploaded; whoever opens it decodes it in their own browser.">Copy share link</button>
     <button class="ghost" id="newImportBtn">Paste a new export</button>
   </div>
 
@@ -202,6 +203,20 @@
       </table>
     </div>
 
+    <div id="zoneSect">
+      <h2 class="sect">By dungeon <span class="sub">where the casts happened — and how you did there</span></h2>
+      <div class="panel tblWrap">
+        <table id="zoneTable">
+          <thead><tr>
+            <th>Zone</th>
+            <th class="num">Casts</th><th class="num">Windows</th><th class="num">You kicked</th><th class="num">Let through</th>
+            <th class="num">Converted</th><th class="num">Median rx</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
     <h2 class="sect">Sessions</h2>
     <div class="panel tblWrap">
       <table id="sessionTable">
@@ -212,11 +227,25 @@
         <tbody></tbody>
       </table>
     </div>
+
+    <div id="crewSect">
+      <h2 class="sect">Your crew <span class="sub">every player Vigil has watched land an interrupt — lifetime, across all your sessions</span></h2>
+      <div class="panel tblWrap">
+        <table id="crewTable">
+          <thead><tr>
+            <th>Player</th><th>Favorite tool</th>
+            <th class="num">Kicks in this import</th><th class="num">Lifetime kicks</th><th class="num">In your groups</th>
+            <th>Last seen</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <footer>
-    <span>Vigil Parse · report v1 · works with Vigil 0.5.0+ exports</span>
-    <span>Your data never leaves this page.</span>
+    <span>Vigil Parse · report v2 · works with Vigil 0.5.0+ exports (dungeon splits &amp; crew need 0.9.0+)</span>
+    <span>Your data never leaves this page — share links carry it in the URL itself, past the #, which no server ever sees.</span>
     <span><a href="https://github.com/karlbonitz/Vigil">Vigil on GitHub</a></span>
   </footer>
 </div>
@@ -229,12 +258,19 @@ function vpMedian(a) {
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
 }
 
+function vpPercentile(a, p) {
+  if (!a.length) return null;
+  const s = [...a].sort((x, y) => x - y);
+  return s[Math.min(s.length - 1, Math.max(0, Math.ceil((p / 100) * s.length) - 1))];
+}
+
 /* Aggregate an array of Vigil Parse sessions (the export's `sessions`) into
    totals, a by-spell breakdown, and per-session summaries. */
 function vpAggregate(sessions) {
   const agg = { casts: 0, windows: 0, intMe: 0, intOther: 0, miss: 0, rx: [],
                 kickCasts: 0, myInterrupts: 0, wastedKicks: 0, dropped: 0 };
   const bySpell = new Map();
+  const byZone = new Map();
   const perSession = [];
 
   sessions.forEach((s, i) => {
@@ -249,15 +285,25 @@ function vpAggregate(sessions) {
       if (!b) { b = { sp: r.sp || '?', srcs: new Map(), n: 0, win: 0, intMe: 0, intOther: 0, miss: 0, locked: 0, pvp: 0 }; bySpell.set(key, b); }
       b.n++;
       if (r.src) b.srcs.set(r.src, (b.srcs.get(r.src) || 0) + 1);
-      if (r.z) ps.zones.set(r.z, (ps.zones.get(r.z) || 0) + 1);
-      if (r.win) { agg.windows++; ps.windows++; b.win++; }
+      let zb = null;
+      if (r.z) {
+        ps.zones.set(r.z, (ps.zones.get(r.z) || 0) + 1);
+        zb = byZone.get(r.z);
+        if (!zb) { zb = { z: r.z, casts: 0, win: 0, intMe: 0, miss: 0, rx: [] }; byZone.set(r.z, zb); }
+        zb.casts++;
+      }
+      if (r.win) { agg.windows++; ps.windows++; b.win++; if (zb) zb.win++; }
       if (r.tier === 'locked') b.locked++;
       if (r.pvp) b.pvp++;
       if (r.out === 'int') {
-        if (r.by === 'me') { agg.intMe++; ps.intMe++; b.intMe++; if (r.rx != null) agg.rx.push(r.rx); }
+        if (r.by === 'me') {
+          agg.intMe++; ps.intMe++; b.intMe++;
+          if (zb) zb.intMe++;
+          if (r.rx != null) { agg.rx.push(r.rx); if (zb) zb.rx.push(r.rx); }
+        }
         else { agg.intOther++; b.intOther++; }
       }
-      if (r.miss) { agg.miss++; ps.miss++; b.miss++; }
+      if (r.miss) { agg.miss++; ps.miss++; b.miss++; if (zb) zb.miss++; }
     });
     const c = s.counters || {};
     agg.kickCasts += c.kickCasts || 0; agg.myInterrupts += c.myInterrupts || 0;
@@ -276,7 +322,36 @@ function vpAggregate(sessions) {
              locked: b.locked >= b.n / 2, pvp: b.pvp > 0 };
   }).sort((a, b) => (b.miss - a.miss) || (b.n - a.n));
 
-  return { agg, spells, perSession, medianRx: vpMedian(agg.rx), rxN: agg.rx.length };
+  const zones = [...byZone.values()].map(z => ({
+    z: z.z, casts: z.casts, win: z.win, intMe: z.intMe, miss: z.miss,
+    conv: z.win ? Math.round(100 * z.intMe / z.win) : null,
+    medianRx: vpMedian(z.rx),
+  })).sort((a, b) => b.casts - a.casts);
+
+  return { agg, spells, perSession, zones,
+           medianRx: vpMedian(agg.rx), p90Rx: vpPercentile(agg.rx, 90),
+           fastestRx: agg.rx.length ? Math.min.apply(null, agg.rx) : null,
+           rxN: agg.rx.length };
+}
+
+/* Merge the export's account-wide roster (per-player interrupt profiles) with
+   the scoped sessions' per-session kicker tallies into "your crew" rows. */
+function vpCrew(roster, sessions) {
+  const here = new Map();
+  (sessions || []).forEach(s => {
+    Object.keys(s.kickers || {}).forEach(n => here.set(n, (here.get(n) || 0) + s.kickers[n]));
+  });
+  const names = new Set(Object.keys(roster || {}));
+  here.forEach((_, n) => names.add(n));
+  return [...names].map(n => {
+    const p = (roster || {})[n] || {};
+    let tool = '', toolN = 0;
+    Object.keys(p.tools || {}).forEach(t => {
+      if (p.tools[t] > toolN) { toolN = p.tools[t]; tool = t; }
+    });
+    return { name: n, class: p.class, kicks: p.kicks || 0, gkicks: p.gkicks || 0,
+             tool, here: here.get(n) || 0, last: p.last };
+  }).sort((a, b) => (b.here - a.here) || (b.kicks - a.kicks) || (a.name < b.name ? -1 : 1));
 }
 
 /* Validate + normalize a pasted export. Throws with a user-facing message. */
@@ -339,10 +414,24 @@ function vpSample() {
       ['Flame Strike',    'Nethermancer Sepethrea', 4, 0, 0, 0, 0, true, 1, 0],
       ['Fear',            'Deathwhisper',         3,  3, 2, 0, 1, false, 0, 460, true], // enemy Warlock (PvP)
     ]);
-  return { v: 1, exported: 1782882000, sessions: [s1, s2] };
+  s1.kickers = { 'Korgha': 17, 'Grimjaw': 6, 'Brandt': 4 };
+  s2.kickers = { 'Vexa': 14, 'Brandt': 5 };
+  const roster = {
+    'Korgha':  { class: 'SHAMAN', kicks: 58, gkicks: 12, first: 1779300000, last: 1782703000,
+                 tools: { 'Earth Shock': 58 } },
+    'Vexa':    { class: 'MAGE', kicks: 31, gkicks: 8, first: 1780200000, last: 1782875600,
+                 tools: { 'Counterspell': 31 } },
+    'Grimjaw': { class: 'WARRIOR', kicks: 41, gkicks: 33, first: 1780000000, last: 1782702900,
+                 tools: { 'Pummel': 29, 'Shield Bash': 12 } },
+    'Brandt':  { class: 'ROGUE', kicks: 23, gkicks: 19, first: 1780900000, last: 1782875400,
+                 tools: { 'Kick': 23 } },
+    'Luna':    { class: 'MAGE', kicks: 9, gkicks: 2, first: 1781500000, last: 1781500900,
+                 tools: { 'Counterspell': 9 } },
+  };
+  return { v: 1, exported: 1782882000, sessions: [s1, s2], roster };
 }
 
-if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpMedian, vpSample };
+if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpMedian, vpPercentile, vpCrew, vpSample };
 </script>
 
 <script>
@@ -366,7 +455,7 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
 
   function render() {
     const sessions = scope === -1 ? payload.sessions : [payload.sessions[scope]];
-    const { agg, spells, perSession, medianRx, rxN } = vpAggregate(sessions);
+    const { agg, spells, zones, medianRx, p90Rx, fastestRx, rxN } = vpAggregate(sessions);
 
     // --- tiles (hero first: the stat WCL can't show) ---
     const conv = agg.windows ? Math.round(100 * agg.intMe / agg.windows) : null;
@@ -382,7 +471,8 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
       tile('Windows converted', conv !== null ? conv + '<span style="font-size:15px;color:var(--ink-2)"> %</span>' : '—',
            'of flagged casts, you got the stop off') +
       tile('Median reaction', medianRx !== null ? num(medianRx) + '<span style="font-size:15px;color:var(--ink-2)"> ms</span>' : '—',
-           rxN ? 'cue → your interrupt, over ' + num(rxN) : 'no timed kicks yet') +
+           rxN ? 'fastest ' + num(fastestRx) + ' · p90 ' + num(p90Rx) + ' · over ' + num(rxN) + ' timed kicks'
+               : 'no timed kicks yet') +
       tile('Wasted kicks', num(agg.wastedKicks),
            'spent on uninterruptible casts');
 
@@ -404,6 +494,34 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
         '<td class="num">' + num(s.intMe) + '</td>' +
         '<td class="num">' + num(s.miss) + '</td>' +
         '<td class="barCell"><div class="track"><div class="bar" style="width:' + Math.round(100 * s.n / maxN) + '%">' + segs + '</div></div></td>' +
+        '</tr>';
+    }).join('');
+
+    // --- by-dungeon table (only when rows carry zones — Vigil 0.9.0+) ---
+    $('#zoneSect').style.display = zones.length ? 'block' : 'none';
+    $('#zoneTable tbody').innerHTML = zones.map(z =>
+      '<tr>' +
+      '<td class="spell">' + esc(z.z) + '</td>' +
+      '<td class="num">' + num(z.casts) + '</td>' +
+      '<td class="num">' + num(z.win) + '</td>' +
+      '<td class="num">' + num(z.intMe) + '</td>' +
+      '<td class="num"' + (z.miss ? ' style="color:var(--crit)"' : '') + '>' + num(z.miss) + '</td>' +
+      '<td class="num">' + (z.conv !== null ? z.conv + ' %' : '<span class="dim">—</span>') + '</td>' +
+      '<td class="num">' + (z.medianRx !== null ? num(z.medianRx) + ' ms' : '<span class="dim">—</span>') + '</td>' +
+      '</tr>').join('');
+
+    // --- your crew (account-wide roster + this import's kicker tallies) ---
+    const crew = vpCrew(payload.roster, sessions);
+    $('#crewSect').style.display = crew.length ? 'block' : 'none';
+    $('#crewTable tbody').innerHTML = crew.slice(0, 15).map(c => {
+      const dot = CLASS_COLORS[(c.class || '').toUpperCase()] || 'var(--ink-3)';
+      return '<tr>' +
+        '<td class="spell"><span class="classDot" style="background:' + dot + '"></span>' + esc(c.name) + '</td>' +
+        '<td class="dim">' + (c.tool ? esc(c.tool) : '—') + '</td>' +
+        '<td class="num">' + num(c.here) + '</td>' +
+        '<td class="num">' + num(c.kicks) + '</td>' +
+        '<td class="num">' + num(c.gkicks) + '</td>' +
+        '<td class="dim">' + fmtDate(c.last) + '</td>' +
         '</tr>';
     }).join('');
 
@@ -469,6 +587,77 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
     $('#pasteBox').focus();
   });
   $('#sessionSel').addEventListener('change', e => { scope = parseInt(e.target.value, 10); render(); });
+
+  /* ===== share links ======================================================= */
+  /* The report travels in the URL fragment (#d=…): gzipped, base64url. The
+     fragment never reaches any server — same privacy story as the paste. */
+  const b64url = {
+    enc(bytes) {
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    dec(str) {
+      const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    },
+  };
+
+  async function makeShareLink() {
+    if (!window.CompressionStream) {
+      throw new Error('This browser cannot build share links (no CompressionStream). The paste flow still works everywhere.');
+    }
+    const stream = new Blob([JSON.stringify(payload)]).stream()
+      .pipeThrough(new CompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    const hash = '#d=' + b64url.enc(new Uint8Array(buf));
+    const url = location.origin + location.pathname + hash;
+    if (url.length > 30000) {
+      throw new Error('This export is too large to travel as a link (' + Math.round(url.length / 1000) + 'k characters) — share the paste instead.');
+    }
+    return { url, hash };
+  }
+
+  async function loadFromHash() {
+    const m = location.hash.match(/^#d=([A-Za-z0-9\-_]+)$/);
+    if (!m) return;
+    try {
+      if (!window.DecompressionStream) {
+        throw new Error('This browser cannot open share links (no DecompressionStream) — ask for the raw export text instead.');
+      }
+      const stream = new Blob([b64url.dec(m[1])]).stream()
+        .pipeThrough(new DecompressionStream('gzip'));
+      load(vpDecode(await new Response(stream).text()));
+    } catch (e) {
+      const el = $('#importError');
+      el.textContent = /Vigil|browser/.test(e.message) ? e.message
+        : 'This share link is damaged or truncated — ask for a fresh one, or paste the export instead.';
+      el.style.display = 'block';
+    }
+  }
+
+  const shareBtn = $('#shareBtn');
+  if (!window.CompressionStream) shareBtn.style.display = 'none';
+  shareBtn.addEventListener('click', async () => {
+    try {
+      const { url, hash } = await makeShareLink();
+      history.replaceState(null, '', hash); // the address bar becomes shareable too
+      await navigator.clipboard.writeText(url);
+      const was = shareBtn.textContent;
+      shareBtn.textContent = 'Link copied ✓';
+      setTimeout(() => { shareBtn.textContent = was; }, 1800);
+    } catch (e) {
+      const el = $('#importError');
+      el.textContent = e.message;
+      el.style.display = 'block';
+    }
+  });
+
+  loadFromHash();
 })();
 </script>
 <!-- VIGIL:FRAGMENT-END -->
