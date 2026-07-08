@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Headless smoke test: load Vigil under a stubbed WoW API (real Lua 5.1 via
+"""Headless smoke test: load Vantage under a stubbed WoW API (real Lua 5.1 via
 lupa) and drive a fake session per class. Usage: python3 tests/run.py"""
 import os
 import sys
@@ -24,7 +24,7 @@ CLASS_CONFIGS = [
 
 def toc_files():
     files = []
-    with open(os.path.join(ROOT, "Vigil.toc")) as fh:
+    with open(os.path.join(ROOT, "Vantage.toc")) as fh:
         for line in fh:
             line = line.strip()
             if line and not line.startswith("#"):
@@ -67,7 +67,7 @@ def run_class(cfg):
             return False
 
     # expose the private addon namespace to the scenario's assertions
-    g.Vigil = ns
+    g.Vantage = ns
 
     try:
         with open(os.path.join(ROOT, "tests", "scenario.lua")) as fh:

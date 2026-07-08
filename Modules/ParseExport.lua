@@ -1,15 +1,15 @@
--- Vigil/Modules/ParseExport.lua
+-- Vantage/Modules/ParseExport.lua
 --
--- Exports Vigil Parse data as a JSON string in a copy-paste window
--- (/vigil export). WoW addons have no network access, so the v0.1 bridge is:
--- Ctrl+A, Ctrl+C here -> paste into the Vigil Parse web report (a static page
+-- Exports Vantage Parse data as a JSON string in a copy-paste window
+-- (/vantage export). WoW addons have no network access, so the v0.1 bridge is:
+-- Ctrl+A, Ctrl+C here -> paste into the Vantage Parse web report (a static page
 -- that decodes everything in your browser; nothing is uploaded anywhere).
 --
--- The encoder is hand-rolled (~40 lines) to keep Vigil dependency-free.
+-- The encoder is hand-rolled (~40 lines) to keep Vantage dependency-free.
 -- Compression (LibDeflate) becomes worthwhile only if strings outgrow the
 -- edit box in practice.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("ParseExport")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("ParseExport")
 
 -- ---------------------------------------------------------------------------
 -- Minimal JSON encoder (strings, numbers, booleans, arrays, string-key maps)
@@ -61,8 +61,8 @@ function M:BuildExport()
     local payload = {
         v        = 1,
         exported = time(),
-        sessions = (VigilParseDB and VigilParseDB.sessions) or {},
-        roster   = (VigilParseDB and VigilParseDB.roster) or {},
+        sessions = (VantageParseDB and VantageParseDB.sessions) or {},
+        roster   = (VantageParseDB and VantageParseDB.roster) or {},
     }
     local out = {}
     enc(payload, out)
@@ -70,12 +70,12 @@ function M:BuildExport()
 end
 
 -- ---------------------------------------------------------------------------
--- Export window (built lazily; styled like the rest of Vigil)
+-- Export window (built lazily; styled like the rest of Vantage)
 -- ---------------------------------------------------------------------------
 local frame
 
 local function build()
-    frame = CreateFrame("Frame", "VigilExportFrame", UIParent)
+    frame = CreateFrame("Frame", "VantageExportFrame", UIParent)
     frame:SetSize(560, 320)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
@@ -89,11 +89,11 @@ local function build()
     local bg = frame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(frame)
     bg:SetColorTexture(0.055, 0.06, 0.075, 0.97)
-    frame.border = Vigil:CreateBorder(frame)
+    frame.border = Vantage:CreateBorder(frame)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOPLEFT", 12, -10)
-    title:SetText("Vigil Parse — session export")
+    title:SetText("Vantage Parse — session export")
 
     local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
@@ -103,7 +103,7 @@ local function build()
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -2, -2)
 
-    local scroll = CreateFrame("ScrollFrame", "VigilExportScroll", frame, "UIPanelScrollFrameTemplate")
+    local scroll = CreateFrame("ScrollFrame", "VantageExportScroll", frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -48)
     scroll:SetPoint("BOTTOMRIGHT", -30, 12)
 
@@ -129,7 +129,7 @@ end
 -- user to Ctrl+C (the plate inspector uses this too).
 function M:ShowText(payload, title, hint)
     if not frame then build() end
-    frame.title:SetText(title or "Vigil")
+    frame.title:SetText(title or "Vantage")
     frame.hint:SetText(hint or "Press |cffffd100Ctrl+C|r to copy (text is pre-selected).")
     local eb = frame.editBox
     eb.payload = payload
@@ -145,12 +145,12 @@ function M:Toggle()
         return
     end
     local payload = self:BuildExport()
-    self:ShowText(payload, "Vigil Parse — session export",
-        "Press |cffffd100Ctrl+C|r to copy (text is pre-selected), then paste it into the report page: |cffffd100karlbonitz.github.io/Vigil|r")
-    Vigil:Print(("Export ready: %.1f KB. Ctrl+C, then paste into the report page: karlbonitz.github.io/Vigil")
+    self:ShowText(payload, "Vantage Parse — session export",
+        "Press |cffffd100Ctrl+C|r to copy (text is pre-selected), then paste it into the report page: |cffffd100karlbonitz.github.io/Vantage|r")
+    Vantage:Print(("Export ready: %.1f KB. Ctrl+C, then paste into the report page: karlbonitz.github.io/Vantage")
         :format(#payload / 1024))
 end
 
 function M:OnEnable() end
 
-Vigil.ParseExport = M
+Vantage.ParseExport = M

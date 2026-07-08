@@ -1,4 +1,4 @@
--- Vigil/Modules/ThreatEst.lua
+-- Vantage/Modules/ThreatEst.lua
 --
 -- The amber tier: "you're CLOSING IN on pulling this mob" — before the red
 -- ground truth (the mob turning to you) can exist. The 2.5.5 threat API is
@@ -17,8 +17,8 @@
 --     spammy-early. That's the right way to be wrong.
 --
 -- Tallies live per combat: PLAYER_REGEN_ENABLED wipes the book.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("ThreatEst")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("ThreatEst")
 
 local CLOSING = 1.3 -- x the holder's damage
 
@@ -52,7 +52,7 @@ local function onCLEU()
     -- only my group's output, and only onto mobs we can see (plate = tracked)
     if not (bit and bit.band and srcFlags) then return end
     if bit.band(srcFlags, AFF_GROUP) == 0 then return end
-    if not (dstGUID and Vigil.guidToUnit[dstGUID]) then return end
+    if not (dstGUID and Vantage.guidToUnit[dstGUID]) then return end
 
     local t = tallies[dstGUID]
     if not t then t = {}; tallies[dstGUID] = t end
@@ -61,7 +61,7 @@ end
 
 -- DPS question: is MY damage closing in on this mob's current holder?
 function M:Closing(unit)
-    if not Vigil.db.threatAmber then return false end
+    if not Vantage.db.threatAmber then return false end
     local guid = UnitGUID(unit)
     local t = guid and tallies[guid]
     if not t or not myGUID then return false end
@@ -78,7 +78,7 @@ end
 
 -- Tank question: is any OTHER tallied source closing in on my mob?
 function M:RivalClosing(unit)
-    if not Vigil.db.threatAmber then return false end
+    if not Vantage.db.threatAmber then return false end
     local guid = UnitGUID(unit)
     local t = guid and tallies[guid]
     if not t or not myGUID then return false end
@@ -92,9 +92,9 @@ end
 
 function M:OnEnable()
     myGUID = UnitGUID("player")
-    Vigil:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
-    Vigil:RegisterEvent("PLAYER_REGEN_ENABLED", wipeTallies) -- fresh book per combat
-    Vigil:RegisterEvent("PLAYER_ENTERING_WORLD", wipeTallies)
+    Vantage:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
+    Vantage:RegisterEvent("PLAYER_REGEN_ENABLED", wipeTallies) -- fresh book per combat
+    Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", wipeTallies)
 end
 
-Vigil.ThreatEst = M
+Vantage.ThreatEst = M

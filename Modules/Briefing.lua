@@ -1,12 +1,12 @@
--- Vigil/Modules/Briefing.lua
+-- Vantage/Modules/Briefing.lua
 --
--- The dungeon briefing: walk into an instance Vigil has intel on, get the
+-- The dungeon briefing: walk into an instance Vantage has intel on, get the
 -- kick sheet BEFORE the first pull — what to kick on sight, what to never
 -- waste a kick on. Data comes straight from the Intel Pack's zone tags, so
 -- every line traces to a verified entry; dungeons without tags stay silent.
--- Auto-briefs once per instance visit; /vigil brief reprints with the why.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Briefing")
+-- Auto-briefs once per instance visit; /vantage brief reprints with the why.
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Briefing")
 
 -- some clients name the Tempest Keep raid "The Eye"
 local ALIAS = { ["the eye"] = "tempest keep" }
@@ -23,7 +23,7 @@ end
 
 local function entriesFor(instKey)
     local kicks, locks = {}, {}
-    for spell, e in pairs(Vigil.Kickable.byName) do
+    for spell, e in pairs(Vantage.Kickable.byName) do
         if e.zones then
             for _, z in ipairs(e.zones) do
                 -- substring both ways: "the botanica" matches "Botanica" etc.
@@ -66,15 +66,15 @@ end
 function M:Brief(verbose)
     local instKey, instName = currentInstance()
     if not instKey then
-        if verbose then Vigil:Print("No briefing - you're not in a dungeon or raid.") end
+        if verbose then Vantage:Print("No briefing - you're not in a dungeon or raid.") end
         return false
     end
     local kicks, locks = entriesFor(instKey)
     if #kicks == 0 and #locks == 0 then
-        if verbose then Vigil:Print("No intel tagged for " .. instName .. " yet.") end
+        if verbose then Vantage:Print("No intel tagged for " .. instName .. " yet.") end
         return false
     end
-    Vigil:Print("|cffffd100Briefing - " .. instName .. "|r")
+    Vantage:Print("|cffffd100Briefing - " .. instName .. "|r")
     if #kicks > 0 then
         print("  |cff44ff44Kick on sight:|r " .. nameList(kicks, 6))
     end
@@ -89,13 +89,13 @@ function M:Brief(verbose)
             print("  |cffff4444x|r " .. titleCase(item.spell) .. " - " .. gist(item.e.note))
         end
     else
-        print("  (|cffffd100/vigil brief|r for the why)")
+        print("  (|cffffd100/vantage brief|r for the why)")
     end
     return true
 end
 
 local function onZone()
-    if not (Vigil.db and Vigil.db.enabled and Vigil.db.briefing) then return end
+    if not (Vantage.db and Vantage.db.enabled and Vantage.db.briefing) then return end
     local instKey = currentInstance()
     if not instKey then
         lastBriefed = nil -- left the instance; next visit briefs again
@@ -106,8 +106,8 @@ local function onZone()
 end
 
 function M:OnEnable()
-    Vigil:RegisterEvent("ZONE_CHANGED_NEW_AREA", onZone)
-    Vigil:RegisterEvent("PLAYER_ENTERING_WORLD", onZone)
+    Vantage:RegisterEvent("ZONE_CHANGED_NEW_AREA", onZone)
+    Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", onZone)
 end
 
-Vigil.Briefing = M
+Vantage.Briefing = M

@@ -1,31 +1,31 @@
--- Vigil/Core/Util.lua
+-- Vantage/Core/Util.lua
 -- Shared helpers + the private addon namespace.
--- Every Vigil file starts with this line; `Vigil` is one table shared across the addon.
-local addonName, Vigil = ...
+-- Every Vantage file starts with this line; `Vantage` is one table shared across the addon.
+local addonName, Vantage = ...
 
-Vigil.name = addonName
-Vigil.version = "0.9.0"
+Vantage.name = addonName
+Vantage.version = "0.10.0"
 
 -- ---------------------------------------------------------------------------
 -- Output
 -- ---------------------------------------------------------------------------
-local PREFIX = "|cff66ccffVigil|r: "
+local PREFIX = "|cff66ccffVantage|r: "
 
-function Vigil:Print(...)
+function Vantage:Print(...)
     print(PREFIX .. string.join(" ", tostringall(...)))
 end
 
--- Only prints when the `debug` setting is on (set via /vigil debug).
-function Vigil:Debug(...)
+-- Only prints when the `debug` setting is on (set via /vantage debug).
+function Vantage:Debug(...)
     if self.db and self.db.debug then
-        print("|cff888888Vigil[dbg]|r: " .. string.join(" ", tostringall(...)))
+        print("|cff888888Vantage[dbg]|r: " .. string.join(" ", tostringall(...)))
     end
 end
 
 -- ---------------------------------------------------------------------------
 -- Color palette (r, g, b in 0..1). One place to retheme the whole addon.
 -- ---------------------------------------------------------------------------
-Vigil.colors = {
+Vantage.colors = {
     kick      = { 1.00, 0.82, 0.10 }, -- gold: "INTERRUPT NOW"
     kickDown  = { 0.55, 0.55, 0.60 }, -- muted: interruptible, but your kick is on CD
     locked    = { 0.85, 0.20, 0.20 }, -- red: uninterruptible (padlock)
@@ -50,15 +50,15 @@ Vigil.colors = {
 -- RGB("kick"), so remapping here re-themes the whole addon in one move.
 -- Red (padlock/locked) and the threat colors are SEMANTIC and never themed —
 -- and no accent is allowed near red, so "go" can never impersonate "stop".
-Vigil.accents = {
+Vantage.accents = {
     gold   = { 1.00, 0.82, 0.10 },
     teal   = { 0.16, 0.78, 0.62 },
     violet = { 0.68, 0.45, 1.00 },
     ice    = { 0.55, 0.78, 1.00 },
 }
 
--- Unpack a palette entry: local r,g,b = Vigil:RGB("kick")
-function Vigil:RGB(key)
+-- Unpack a palette entry: local r,g,b = Vantage:RGB("kick")
+function Vantage:RGB(key)
     if key == "kick" and self.db then
         local a = self.accents[self.db.accent]
         if a then return a[1], a[2], a[3] end
@@ -73,31 +73,31 @@ end
 -- ---------------------------------------------------------------------------
 local MEDIA = "Interface\\AddOns\\" .. addonName .. "\\Media\\"
 
-Vigil.WHITE = "Interface\\Buttons\\WHITE8x8"
-Vigil.BAR   = MEDIA .. "bar"    -- smooth vertical-gradient statusbar fill
-Vigil.GLOW  = MEDIA .. "glow"   -- soft radial glow (halo / target glow / shadow)
-Vigil.QUESTION_ICON = 134400    -- INV_Misc_QuestionMark
+Vantage.WHITE = "Interface\\Buttons\\WHITE8x8"
+Vantage.BAR   = MEDIA .. "bar"    -- smooth vertical-gradient statusbar fill
+Vantage.GLOW  = MEDIA .. "glow"   -- soft radial glow (halo / target glow / shadow)
+Vantage.QUESTION_ICON = 134400    -- INV_Misc_QuestionMark
 
 -- The statusbar fill every bar wears, per db.barTexture ("gradient" | "flat").
 -- Flat is WHITE + the bar's own color: the modern, minimal look.
-function Vigil:BarTex()
+function Vantage:BarTex()
     return (self.db and self.db.barTexture == "flat") and self.WHITE or self.BAR
 end
 
 -- ---------------------------------------------------------------------------
--- Fonts. All text goes through Vigil:SetFont so the face (db.font) and the
+-- Fonts. All text goes through Vantage:SetFont so the face (db.font) and the
 -- treatment (db.fontStyle: outline | clean | thick) apply everywhere at once.
 -- "clean" trades the outline for a dark drop shadow — reads less chunky at
 -- nameplate sizes. Faces are the four fonts every client ships.
 -- ---------------------------------------------------------------------------
-Vigil.fonts = {
+Vantage.fonts = {
     { key = "friz",     label = "Friz Quadrata", path = "Fonts\\FRIZQT__.TTF" },
     { key = "arial",    label = "Arial Narrow",  path = "Fonts\\ARIALN.TTF" },
     { key = "skurri",   label = "Skurri",        path = "Fonts\\skurri.ttf" },
     { key = "morpheus", label = "Morpheus",      path = "Fonts\\MORPHEUS.ttf" },
 }
 
-function Vigil:Font()
+function Vantage:Font()
     local want = self.db and self.db.font
     for _, f in ipairs(self.fonts) do
         if f.key == want then return f.path end
@@ -105,7 +105,7 @@ function Vigil:Font()
     return STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 end
 
-function Vigil:FontFlags()
+function Vantage:FontFlags()
     local s = self.db and self.db.fontStyle
     if s == "clean" then return "" end
     if s == "thick" then return "THICKOUTLINE" end
@@ -114,7 +114,7 @@ end
 
 -- Apply face + style to a FontString. flagsOverride pins the treatment where
 -- it's structural (the big cue label stays THICK regardless of style).
-function Vigil:SetFont(fs, size, flagsOverride)
+function Vantage:SetFont(fs, size, flagsOverride)
     fs:SetFont(self:Font(), size, flagsOverride or self:FontFlags())
     if fs.SetShadowColor then
         local clean = (self.db and self.db.fontStyle) == "clean" and not flagsOverride
@@ -127,13 +127,13 @@ end
 -- Cue alert sound, per db.cueSound. Numeric fallbacks are the stable classic
 -- sound-kit IDs, so a missing SOUNDKIT constant can't silence the cue.
 -- ---------------------------------------------------------------------------
-Vigil.sounds = {
+Vantage.sounds = {
     { key = "raid",  label = "Raid warning", kit = function() return (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959 end },
     { key = "ready", label = "Ready check",  kit = function() return (SOUNDKIT and SOUNDKIT.READY_CHECK) or 8960 end },
     { key = "bell",  label = "Alarm bell",   kit = function() return (SOUNDKIT and SOUNDKIT.ALARM_CLOCK_WARNING_3) or 12867 end },
 }
 
-function Vigil:CueSound()
+function Vantage:CueSound()
     local want = self.db and self.db.cueSound
     for _, s in ipairs(self.sounds) do
         if s.key == want then return s.kit() end
@@ -147,11 +147,11 @@ end
 -- textures are WHITE + vertex color, so :SetColor() genuinely tints them
 -- (a color-texture base would multiply to black).
 -- ---------------------------------------------------------------------------
-function Vigil:CreateBorder(f)
+function Vantage:CreateBorder(f)
     local edges = {}
     for i = 1, 4 do
         local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
-        t:SetTexture(Vigil.WHITE)
+        t:SetTexture(Vantage.WHITE)
         t:SetVertexColor(0, 0, 0, 1)
         edges[i] = t
     end

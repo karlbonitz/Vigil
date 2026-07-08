@@ -1,14 +1,14 @@
-## Interface: 20504, 20505
-## Title: Vigil
+## Interface: 20504, 20505, 20506
+## Title: Vantage
 ## Notes: Interrupt-smart nameplates — know exactly when to kick, and when not to waste it.
 ## Author: karlbonitz
-## Version: 0.9.0
-## SavedVariables: VigilDB, VigilParseDB
+## Version: 0.10.0
+## SavedVariables: VantageDB, VantageParseDB, VantageLearnedDB
 ## X-Category: Combat
-## X-Website: https://github.com/karlbonitz/Vigil
+## X-Website: https://github.com/karlbonitz/Vantage
 ## X-License: MIT
 # Uncomment + fill these once the CurseForge / Wago project pages exist, so the
-# packager Action can upload to them (with CF_API_KEY / WAGO_API_KEY secrets set):
+# packager Action can upload to them (with CF_API_KEY / WAGO_API_TOKEN secrets set):
 # ## X-Curse-Project-ID: 000000
 # ## X-Wago-ID: xxxxxxxx
 
@@ -24,6 +24,7 @@ Data\InterruptSpells.lua
 # --- Modules (each registers itself with Core and enables on PLAYER_LOGIN) ---
 Modules\Nameplates.lua
 Modules\Skin.lua
+Modules\Learn.lua
 Modules\CastWatch.lua
 Modules\InterruptCue.lua
 Modules\PartyKicks.lua

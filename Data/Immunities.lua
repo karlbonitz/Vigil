@@ -1,9 +1,9 @@
--- Vigil/Data/Immunities.lua
+-- Vantage/Data/Immunities.lua
 --
 -- Crowd-control immunity intel: which enemies a SOFT interrupt (stun/fear/sleep/...)
--- cannot affect — so Vigil never tells you to FEAR a fear-immune boss or STUN a
+-- cannot affect — so Vantage never tells you to FEAR a fear-immune boss or STUN a
 -- stun-immune one. Soft-interrupt entries in InterruptSpells.lua carry a `mechanic`;
--- Vigil:TargetSusceptible(unit, mechanic) answers "will it actually land?".
+-- Vantage:TargetSusceptible(unit, mechanic) answers "will it actually land?".
 --
 -- Three layers, cheapest first:
 --   1) the target is a PLAYER          -> susceptible (PvP; diminishing returns ignored)
@@ -16,7 +16,7 @@
 -- interruptibility (KickableSpells.lua), not the caster's CC immunity.
 --
 -- TODO: diminishing returns (repeated CC on the same target) is NOT modeled yet.
-local addonName, Vigil = ...
+local addonName, Vantage = ...
 
 -- Mechanics: stun, fear, sleep, silence, incapacitate, disorient, root, charm.
 -- entry shapes (name-keyed, lowercased UnitName — same approach as KickableSpells):
@@ -24,7 +24,7 @@ local addonName, Vigil = ...
 --   { stun = true, fear = true }            -- immune to the listed mechanics only
 --   { all = true, susceptible = { stun = true } }  -- immune to all EXCEPT stun
 --   { susceptible = { fear = true } }       -- explicitly CCable (overrides boss heuristic)
-Vigil.Immunities = {
+Vantage.Immunities = {
     -- ── Partially CC-able: named mobs / adds where only SOME CC lands ──────────────
     -- (immune to all soft CC EXCEPT the listed `susceptible` mechanics)
     ["apoko"] = { all = true, susceptible = { stun = true, fear = true, silence = true, incapacitate = true, disorient = true, root = true } },  -- Magisters' Terrace Delrissa add (Draenei shaman). Fully CC-able humanoid: S...
@@ -163,7 +163,7 @@ Vigil.Immunities = {
 }
 
 -- ── NEEDS REVIEW (low confidence) ───────────────────────────────────────────────
--- Verify before activating; move a corrected copy up into Vigil.Immunities.
+-- Verify before activating; move a corrected copy up into Vantage.Immunities.
 --[[
     -- ["dorothee"] = { all = true },  -- Karazhan Wizard of Oz add. No source documents any working CC; guides note...
     -- ["tinhead"] = { all = true },  -- Karazhan Wizard of Oz add (Tin Man); tank-and-kite (rust slow), no CC docum...
@@ -184,15 +184,15 @@ Vigil.Immunities = {
 --]]
 
 -- Returns the immunity entry for a unit (by lowercased name), or nil.
-function Vigil.NpcImmunity(unit)
+function Vantage.NpcImmunity(unit)
     if not unit then return nil end
     local n = UnitName(unit)
-    return n and Vigil.Immunities[n:lower()]
+    return n and Vantage.Immunities[n:lower()]
 end
 
 -- Heuristic boss detection: world bosses + "skull" (level -1) mobs. Catches raid
 -- bosses; the per-NPC table above catches the 5-man dungeon bosses this misses.
-function Vigil.IsBossUnit(unit)
+function Vantage.IsBossUnit(unit)
     if not unit then return false end
     if UnitClassification(unit) == "worldboss" then return true end
     if UnitLevel(unit) == -1 then return true end
@@ -200,12 +200,12 @@ function Vigil.IsBossUnit(unit)
 end
 
 -- Will a soft CC of `mechanic` land on `unit`? Hard kicks pass a nil mechanic -> true.
-function Vigil:TargetSusceptible(unit, mechanic)
+function Vantage:TargetSusceptible(unit, mechanic)
     if not mechanic then return true end           -- hard kick: no CC immunity to consider
     if not unit then return true end
     if UnitIsPlayer(unit) then return true end      -- players: susceptible (DR not modeled yet)
 
-    local imm = Vigil.NpcImmunity(unit)
+    local imm = Vantage.NpcImmunity(unit)
     if imm then
         if imm.susceptible and imm.susceptible[mechanic] then return true end  -- explicit exception
         if imm.all then return false end
@@ -213,6 +213,6 @@ function Vigil:TargetSusceptible(unit, mechanic)
         -- listed, but not immune to THIS mechanic -> fall through to the heuristic
     end
 
-    if Vigil.IsBossUnit(unit) then return false end  -- bosses: immune to all soft CC
+    if Vantage.IsBossUnit(unit) then return false end  -- bosses: immune to all soft CC
     return true                                      -- trash / world mobs: susceptible
 end

@@ -1,7 +1,7 @@
--- Vigil/Data/KickableSpells.lua
+-- Vantage/Data/KickableSpells.lua
 --
 -- The "Intel Pack": which enemy casts matter, and whether they can be interrupted.
--- This is the heart of Vigil's accuracy. Interruptibility is classified from THIS
+-- This is the heart of Vantage's accuracy. Interruptibility is classified from THIS
 -- table, NOT the client's unreliable `notInterruptible` return.
 --
 -- v0.2.4: TBC heroics + Karazhan + Gruul/Magtheridon, plus full SERPENTSHRINE CAVERN
@@ -18,7 +18,7 @@
 --
 -- TODO(content): Zul'Aman, Hyjal, Black Temple, Sunwell; ship as importable Intel
 -- Pack strings.
-local addonName, Vigil = ...
+local addonName, Vantage = ...
 
 local byName = {
     -- heal
@@ -117,11 +117,25 @@ local byID = {
     -- ["mind blast"] = { castTime = 1.5, interruptible = false, priority = 1, category = "nuke", note = "DO NOT ACTIVATE BLINDLY - Coilfang Strider (Vashj p2) Mind Blast is trivial and never kicked (its real danger is instant Panic), BUT a generic ranked Mind Blast IS normally interruptible. A name-keyed false here would wrongly padlock OTHER priest mobs' Mind Blast. Needs per-mob handling before shipping." },
     -- ["summon fathom lurker"] = { castTime = 2, interruptible = false, priority = 1, category = "summon", note = "Fathom-Guard Sharkkis (SSC) pet summon; never kicked in practice (weak pets, kill-order fight). Whether the summon is technically interruptible is UNCONFIRMED. castTime estimated." },--]]
 
-Vigil.Kickable = { byName = byName, byID = byID }
+Vantage.Kickable = { byName = byName, byID = byID }
 
 -- Look up intel for a cast. Returns the entry table, or nil if we have no intel.
-function Vigil.GetKickInfo(spellName, spellID)
+function Vantage.GetKickInfo(spellName, spellID)
     if spellID and byID[spellID] then return byID[spellID] end
-    if spellName then return byName[spellName:lower()] end
+    if spellName then
+        local hit = byName[spellName:lower()]
+        if hit then return hit end
+    end
+    -- Curated intel missed. Fall back to what Vantage LEARNED from live combat
+    -- (casts it watched get interrupted — see Modules/Learn.lua). Curated always
+    -- wins above, so a hand-verified padlock is never overridden by a learned
+    -- entry; learning only ever fills the "unknown" gap.
+    if (not Vantage.db) or Vantage.db.learn ~= false then
+        local L = VantageLearnedDB and VantageLearnedDB.spells
+        if L and spellName then
+            local e = L[spellName:lower()]
+            if e then return e end
+        end
+    end
     return nil
 end

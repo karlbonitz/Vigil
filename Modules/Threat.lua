@@ -1,4 +1,4 @@
--- Vigil/Modules/Threat.lua
+-- Vantage/Modules/Threat.lua
 --
 -- Aggro state on the plate (strip + border, via Skin.SetThreat). Two rules
 -- learned the hard way:
@@ -12,8 +12,8 @@
 --      exactly the unreliability our research predicted. The predictive
 --      amber "about to pull" tier returns when a LibThreatClassic2-style
 --      combat-log estimator lands.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Threat")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Threat")
 
 local THROTTLE = 0.2
 local accum = 0
@@ -24,10 +24,10 @@ local function colorForStatus(unit)
     local mobTarget = unit .. "target"
     local onMe = UnitExists(mobTarget) and UnitIsUnit(mobTarget, "player")
 
-    if Vigil.db.tankMode then
+    if Vantage.db.tankMode then
         if onMe then
             -- it's on you — but is a DPS's damage closing in on losing it?
-            if Vigil.ThreatEst and Vigil.ThreatEst:RivalClosing(unit) then
+            if Vantage.ThreatEst and Vantage.ThreatEst:RivalClosing(unit) then
                 return "threatWarn"
             end
             return "threatOK"                            -- securely yours
@@ -40,34 +40,34 @@ local function colorForStatus(unit)
     end
     if onMe then return "threatBad" end                  -- it's coming for YOU
     -- not on you (yet): amber when your damage says you're closing in
-    if Vigil.ThreatEst and Vigil.ThreatEst:Closing(unit) then
+    if Vantage.ThreatEst and Vantage.ThreatEst:Closing(unit) then
         return "threatWarn"
     end
     return nil
 end
 
 local function update()
-    for unit, overlay in pairs(Vigil.plates) do
+    for unit, overlay in pairs(Vantage.plates) do
         -- keep running with the toggle off so stale strips/borders CLEAR
-        local key = Vigil.db.threat and colorForStatus(unit) or nil
+        local key = Vantage.db.threat and colorForStatus(unit) or nil
         if key then
-            overlay.threatStrip:SetVertexColor(Vigil:RGB(key))
+            overlay.threatStrip:SetVertexColor(Vantage:RGB(key))
             overlay.threatStrip:Show()
         else
             overlay.threatStrip:Hide()
         end
         -- the same state colors the plate border (Skin decides precedence —
         -- your target's accent border always wins over threat)
-        if Vigil.Skin and Vigil.Skin.SetThreat then
-            Vigil.Skin:SetThreat(unit, key)
+        if Vantage.Skin and Vantage.Skin.SetThreat then
+            Vantage.Skin:SetThreat(unit, key)
         end
     end
 end
 
 function M:OnEnable()
     -- event-nudged, but coalesced on a light ticker so 25-man stays cheap
-    Vigil:RegisterEvent("UNIT_THREAT_LIST_UPDATE", function() accum = THROTTLE end)
-    Vigil.frame:HookScript("OnUpdate", function(_, elapsed)
+    Vantage:RegisterEvent("UNIT_THREAT_LIST_UPDATE", function() accum = THROTTLE end)
+    Vantage.frame:HookScript("OnUpdate", function(_, elapsed)
         accum = accum + elapsed
         if accum >= THROTTLE then
             accum = 0
@@ -76,4 +76,4 @@ function M:OnEnable()
     end)
 end
 
-Vigil.Threat = M
+Vantage.Threat = M

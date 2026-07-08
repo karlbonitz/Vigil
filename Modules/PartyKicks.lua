@@ -1,7 +1,7 @@
--- Vigil/Modules/PartyKicks.lua
+-- Vantage/Modules/PartyKicks.lua
 --
 -- The party kick watch: zero-adoption group interrupt awareness. Nobody else
--- needs Vigil — we watch the combat log for groupmates using their interrupts
+-- needs Vantage — we watch the combat log for groupmates using their interrupts
 -- and infer readiness from each tool's base cooldown. When a kickable cast is
 -- up and YOUR stop is down, InterruptCue asks us for a groupmate whose
 -- interrupt should be ready and quietly names them in the cue's center slot.
@@ -13,8 +13,8 @@
 --     beat late, never early.
 --   * Their range to the caster is unknowable from here — the hint is
 --     advisory, the glow and sound stay reserved for YOUR shout.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("PartyKicks")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("PartyKicks")
 
 -- hard interrupts + base cooldowns, TBC 2.5.x
 local KICK_CD = {
@@ -114,10 +114,10 @@ function M:ReadyMateLabel()
 end
 
 function M:OnEnable()
-    Vigil:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
-    Vigil:RegisterEvent("GROUP_ROSTER_UPDATE", rebuildRoster)
-    Vigil:RegisterEvent("UNIT_PET", rebuildRoster)
-    Vigil:RegisterEvent("PLAYER_ENTERING_WORLD", rebuildRoster)
+    Vantage:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
+    Vantage:RegisterEvent("GROUP_ROSTER_UPDATE", rebuildRoster)
+    Vantage:RegisterEvent("UNIT_PET", rebuildRoster)
+    Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", rebuildRoster)
 end
 
-Vigil.PartyKicks = M
+Vantage.PartyKicks = M

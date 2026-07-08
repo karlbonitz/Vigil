@@ -1,15 +1,15 @@
--- Vigil/Modules/Inspect.lua
+-- Vantage/Modules/Inspect.lua
 --
--- /vigil plate — developer tool. Walks your TARGET's nameplate frame tree and
+-- /vantage plate — developer tool. Walks your TARGET's nameplate frame tree and
 -- dumps every child frame and region (parentKey, type, size, shown, texture
 -- path/atlas, colors, text) into a copy-paste window. This is how we learn
 -- what the real 2.5.x client actually draws on a plate, instead of guessing
 -- from retail docs — paste the dump back to the developer.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Inspect")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Inspect")
 
 -- Find the string key(s) this object hangs off: check its direct parent's
--- table, then the UnitFrame root (Vigil keys its own additions there).
+-- table, then the UnitFrame root (Vantage keys its own additions there).
 local function keysFor(obj, parentTbl, rootTbl)
     local found, dup = {}, {}
     for _, tbl in ipairs({ parentTbl, rootTbl }) do
@@ -101,8 +101,8 @@ end
 -- Build the dump for one plate frame (exposed for the test harness).
 function M:DumpPlate(plate)
     local out = {}
-    out[#out + 1] = ("Vigil plate dump — v%s, client %s"):format(
-        Vigil.version or "?",
+    out[#out + 1] = ("Vantage plate dump — v%s, client %s"):format(
+        Vantage.version or "?",
         (GetBuildInfo and select(4, GetBuildInfo())) or "?")
     local uf = plate.UnitFrame
     walk(plate, "NamePlate", 0, out, {}, uf)
@@ -111,19 +111,19 @@ end
 
 function M:InspectTarget()
     if not (C_NamePlate and UnitExists("target")) then
-        Vigil:Print("Target something with a nameplate first, then |cffffd100/vigil plate|r.")
+        Vantage:Print("Target something with a nameplate first, then |cffffd100/vantage plate|r.")
         return
     end
     local plate = C_NamePlate.GetNamePlateForUnit("target")
     if not (plate and plate.UnitFrame) then
-        Vigil:Print("No nameplate found for your target (is its plate on screen?).")
+        Vantage:Print("No nameplate found for your target (is its plate on screen?).")
         return
     end
     local dump = self:DumpPlate(plate)
-    Vigil.ParseExport:ShowText(dump, "Vigil — nameplate inspector",
+    Vantage.ParseExport:ShowText(dump, "Vantage — nameplate inspector",
         "Press |cffffd100Ctrl+C|r to copy, then paste the dump back to the developer.")
 end
 
 function M:OnEnable() end
 
-Vigil.Inspect = M
+Vantage.Inspect = M

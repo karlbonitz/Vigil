@@ -52,17 +52,17 @@ end
 -- ---------------------------------------------------------------------------
 -- 1. Login
 -- ---------------------------------------------------------------------------
-H.FireEvent("ADDON_LOADED", "Vigil")
-ok(Vigil.db ~= nil, "db initialized on ADDON_LOADED")
+H.FireEvent("ADDON_LOADED", "Vantage")
+ok(Vantage.db ~= nil, "db initialized on ADDON_LOADED")
 H.FireEvent("PLAYER_LOGIN")
-eq(Vigil.playerClass, cfg.class, "player class detected")
-ok(Vigil.Options and Vigil.Options.panel ~= nil, "options panel built without error")
+eq(Vantage.playerClass, cfg.class, "player class detected")
+ok(Vantage.Options and Vantage.Options.panel ~= nil, "options panel built without error")
 
 -- 2. A plate appears; catch decisions from a live cast
 spawnMob("nameplate1", "Cabal Acolyte")
 H.alias.target = "nameplate1"
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
-local o = Vigil.plates.nameplate1
+local o = Vantage.plates.nameplate1
 ok(o ~= nil, "overlay created on plate add")
 -- regression: a FRESH overlay must not render its empty cast bar (the
 -- "ghost grey bar under every new plate" bug found in-game)
@@ -95,30 +95,30 @@ eq(blizzBorder.__alpha, 0, "rounded border art alpha-zeroed on skinned plate")
 eq(blizzUF.LevelFrame.__alpha, 0, "Blizzard level frame suppressed on skinned plate")
 eq(blizzUF.selectionHighlight.__alpha, 0, "selection highlight suppressed on skinned plate")
 eq(blizzUF.healthBar.background.__alpha, 0, "stock grey bar background suppressed")
-SlashCmdList["VIGIL"]("skin") -- off
+SlashCmdList["VANTAGE"]("skin") -- off
 ok(blizzBorder:IsShown(), "rounded border art restored when skin off")
 eq(blizzBorder.__alpha, 1, "rounded border alpha restored when skin off")
 eq(blizzUF.LevelFrame.__alpha, 1, "Blizzard level frame restored when skin off")
 eq(blizzUF.selectionHighlight.__alpha, 0.25, "selection highlight restored when skin off")
 eq(blizzUF.healthBar.background.__alpha, 0.85, "stock bar background restored when skin off")
 eq(blizzCB.__unit, "nameplate1", "Blizzard cast bar re-armed when skin off")
-SlashCmdList["VIGIL"]("skin") -- back on
+SlashCmdList["VANTAGE"]("skin") -- back on
 eq(blizzBorder.__alpha, 0, "rounded border re-suppressed when skin back on")
 eq(blizzCB.__unit, nil, "Blizzard cast bar re-detached when skin back on")
 
 -- 2d. Style options apply live (v0.8.0): bar heights, fonts, fills, thresholds
-eq(Vigil.db.barHeight, 0, "bar height defaults to auto")
-Vigil.db.barHeight = 16
-Vigil.Skin:RefreshAll()
+eq(Vantage.db.barHeight, 0, "bar height defaults to auto")
+Vantage.db.barHeight = 16
+Vantage.Skin:RefreshAll()
 eq(blizzUF.HealthBarsContainer.__h, 16, "custom bar height applied to the container")
-Vigil.db.barHeight = 0
-Vigil.Skin:RefreshAll()
+Vantage.db.barHeight = 0
+Vantage.Skin:RefreshAll()
 eq(blizzUF.HealthBarsContainer.__h, 11, "auto bar height restores the client default")
 
-Vigil.db.font = "arial"; Vigil.db.fontStyle = "clean"; Vigil.db.barTexture = "flat"
-Vigil.db.castBarHeight = 16
-Vigil.Skin:RefreshAll()
-Vigil.Nameplates:ApplyStyle()
+Vantage.db.font = "arial"; Vantage.db.fontStyle = "clean"; Vantage.db.barTexture = "flat"
+Vantage.db.castBarHeight = 16
+Vantage.Skin:RefreshAll()
+Vantage.Nameplates:ApplyStyle()
 ok(blizzUF.name.__font and blizzUF.name.__font[1] == "Fonts\\ARIALN.TTF",
     "font face applies to the plate name")
 eq(blizzUF.name.__font and blizzUF.name.__font[3], "", "clean text style drops the outline")
@@ -128,26 +128,26 @@ eq(o.iconF.__h, 18, "cast icon tracks the cast bar height")
 eq(o.castbar.__bartex.__tex, "Interface\\Buttons\\WHITE8x8", "flat fill applies to the cast bar")
 eq(o.kickText.__font and o.kickText.__font[3], "THICKOUTLINE", "cue label stays THICK regardless of text style")
 -- back to stock for the rest of the session
-Vigil.db.font = "friz"; Vigil.db.fontStyle = "outline"; Vigil.db.barTexture = "gradient"
-Vigil.db.castBarHeight = 12
-Vigil.Skin:RefreshAll()
-Vigil.Nameplates:ApplyStyle()
+Vantage.db.font = "friz"; Vantage.db.fontStyle = "outline"; Vantage.db.barTexture = "gradient"
+Vantage.db.castBarHeight = 12
+Vantage.Skin:RefreshAll()
+Vantage.Nameplates:ApplyStyle()
 
 -- execute threshold slider: 25% health is quiet at 20%, lit once raised to 30%
 blizzUF.healthBar:SetValue(25)
-eq(blizzUF.__vigilExec.__w, 1, "25% health: exec tick quiet at default 20% threshold")
-Vigil.db.execPct = 30
-Vigil.Skin:RefreshAll()
-eq(blizzUF.__vigilExec.__w, 2, "25% health: exec tick lit once threshold raised to 30%")
-Vigil.db.execPct = 20
+eq(blizzUF.__vantageExec.__w, 1, "25% health: exec tick quiet at default 20% threshold")
+Vantage.db.execPct = 30
+Vantage.Skin:RefreshAll()
+eq(blizzUF.__vantageExec.__w, 2, "25% health: exec tick lit once threshold raised to 30%")
+Vantage.db.execPct = 20
 blizzUF.healthBar:SetValue(100)
-Vigil.Skin:RefreshAll()
+Vantage.Skin:RefreshAll()
 
 -- cue sound choice resolves through the helper the cue actually plays
-eq(Vigil:CueSound(), 8959, "default cue sound = raid warning")
-Vigil.db.cueSound = "ready"
-eq(Vigil:CueSound(), 8960, "cue sound choice resolves")
-Vigil.db.cueSound = "raid"
+eq(Vantage:CueSound(), 8959, "default cue sound = raid warning")
+Vantage.db.cueSound = "ready"
+eq(Vantage:CueSound(), 8960, "cue sound choice resolves")
+Vantage.db.cueSound = "raid"
 
 -- 3. Kickable cast starts (live API path): Greater Heal is in the Intel Pack
 H.units.nameplate1.casting = {
@@ -161,8 +161,8 @@ ok(o.kickF:IsShown(), "cue label shown")
 eq(o.kickText:GetText(), cfg.label, "cue label text matches class tool")
 eq(H.sounds, 1, "sound played exactly once")
 -- the centered cue clears the plate's inner text (cueHidesText default on)
-ok(not blizzUF.__vigilHP:IsShown(), "cue clears the HP text while shown")
-ok(not blizzUF.__vigilLvl:IsShown(), "cue clears the level text while shown")
+ok(not blizzUF.__vantageHP:IsShown(), "cue clears the HP text while shown")
+ok(not blizzUF.__vantageLvl:IsShown(), "cue clears the level text while shown")
 
 -- 4. Cooldown re-eval doesn't re-fire the sound
 H.FireEvent("SPELL_UPDATE_COOLDOWN")
@@ -186,21 +186,21 @@ H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
 eq(o.flashing, "kicked", "KICKED flash started")
 eq(o.timeText:GetText(), "KICKED", "verdict label")
 ok(o.active == nil, "cast record resolved at flash start")
-ok(blizzUF.__vigilHP:IsShown(), "HP text returns once the cue clears")
-ok(blizzUF.__vigilLvl:IsShown(), "level text returns once the cue clears")
+ok(blizzUF.__vantageHP:IsShown(), "HP text returns once the cue clears")
+ok(blizzUF.__vantageLvl:IsShown(), "level text returns once the cue clears")
 H.Advance(1.0)
 ok(not o.castbar:IsShown(), "bar cleared after flash")
 ok(o.flashing == nil, "flash state cleared")
 
 -- 6b. The roster: my kick above built MY profile; a party member's interrupt
 -- (flags 0x512 = party + friendly + player-controlled + TYPE_PLAYER) builds
--- theirs — even on a mob Vigil isn't tracking.
-local myProf = VigilParseDB.roster["Testchar"]
+-- theirs — even on a mob Vantage isn't tracking.
+local myProf = VantageParseDB.roster["Testchar"]
 ok(myProf and myProf.kicks == 1, "my own interrupt lands in the roster")
 H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-2-KICKER", "Kickbot", 0x512, 0,
     "Creature-0-9999", "Some Mob", 0, 0, 2139, "Counterspell", 0, 133, "Fireball")
 H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
-local prof = VigilParseDB.roster["Kickbot"]
+local prof = VantageParseDB.roster["Kickbot"]
 ok(prof ~= nil, "roster profile created for a party member's interrupt")
 eq(prof and prof.kicks, 1, "roster kick counted")
 eq(prof and prof.tools and prof.tools["Counterspell"], 1, "roster tool tallied")
@@ -210,8 +210,30 @@ eq(prof and prof.class, "MAGE", "class resolved via GetPlayerInfoByGUID")
 H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-3-ENEMY", "Ganker", 0x548, 0,
     "Creature-0-9999", "Some Mob", 0, 0, 2139, "Counterspell", 0, 133, "Fireball")
 H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
-ok(VigilParseDB.roster["Ganker"] == nil, "hostile players stay out of the roster")
-SlashCmdList["VIGIL"]("roster") -- smoke: prints without error
+ok(VantageParseDB.roster["Ganker"] == nil, "hostile players stay out of the roster")
+SlashCmdList["VANTAGE"]("roster") -- smoke: prints without error
+
+-- 6c. Self-learning: watching a cast get interrupted banks it as kickable.
+-- A hostile caster (destFlags 0x40) casts an UNCURATED spell (Radiation Bolt,
+-- straight from a real Gnomeregan log) and a groupmate kicks it.
+H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-2-KICKER", "Kickbot", 0x512, 0,
+    "Creature-0-8888", "Irradiated Pillager", 0x40, 0, 2139, "Counterspell", 0,
+    9771, "Radiation Bolt")
+H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
+local learned = VantageLearnedDB and VantageLearnedDB.spells
+ok(learned and learned["radiation bolt"] ~= nil, "learned an uncurated interrupted cast")
+local li = Vantage.GetKickInfo("Radiation Bolt", 9771)
+ok(li and li.interruptible == true and li.learned, "learned cast now looks up as kickable")
+-- A curated padlock is NEVER shadowed or overridden, even if it gets 'interrupted'
+-- (e.g. a same-named spell on a different mob that IS kickable).
+H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-2-KICKER", "Kickbot", 0x512, 0,
+    "Creature-0-8888", "Some Healer", 0x40, 0, 2139, "Counterspell", 0,
+    44201, "Tranquility")
+H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
+ok(not (learned and learned["tranquility"]), "curated spells aren't shadowed into the learned table")
+local ci = Vantage.GetKickInfo("Tranquility")
+ok(ci and ci.interruptible == false, "curated padlock still wins over any learning")
+SlashCmdList["VANTAGE"]("learned") -- smoke: prints without error
 
 -- 6c. Dungeon briefing: zone-in to a tagged instance prints the kick sheet once
 local before = #H.printed
@@ -233,7 +255,7 @@ for i = before + 1, #H.printed do
     if H.printed[i]:find("Briefing") then rebriefed = true end
 end
 ok(not rebriefed, "same instance visit doesn't re-brief")
-SlashCmdList["VIGIL"]("brief") -- verbose reprint: prints without error
+SlashCmdList["VANTAGE"]("brief") -- verbose reprint: prints without error
 ok(H.printed[#H.printed]:find("%- "), "verbose brief carries note gists")
 
 -- 6d. Party kick watch: a groupmate's witnessed interrupt feeds the cd tier
@@ -274,7 +296,7 @@ eq(H.sounds, soundsBefore + 1, "the shout brings its sound")
 H.groupSize = 0
 H.inGroup = false
 H.FireEvent("GROUP_ROSTER_UPDATE")
-ok(Vigil.PartyKicks:ReadyMate() == nil, "ex-groupmates are never hinted")
+ok(Vantage.PartyKicks:ReadyMate() == nil, "ex-groupmates are never hinted")
 -- wind the cast down cleanly so later sections start from a quiet plate
 H.units.nameplate1.casting = nil
 H.FireEvent("UNIT_SPELLCAST_STOP", "nameplate1")
@@ -317,7 +339,7 @@ H.Advance(1.0)
 -- 9. Soft-CC immunity: a boss suppresses soft cues (soft classes fall to aware)
 spawnMob("nameplate2", "Murmur", { guid = "Creature-0-2222", classification = "worldboss" })
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate2")
-local o2 = Vigil.plates.nameplate2
+local o2 = Vantage.plates.nameplate2
 H.units.nameplate2.casting = {
     name = "Greater Heal", spellID = 25314,
     startMS = H.now * 1000, endMS = (H.now + 2.5) * 1000,
@@ -330,7 +352,7 @@ H.FireEvent("UNIT_SPELLCAST_STOP", "nameplate2")
 -- 10. PvP: enemy player, unknown spell -> cue fires anyway
 spawnMob("nameplate3", "Sneakcaster", { guid = "Player-1-ENEMY", isPlayer = true })
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate3")
-local o3 = Vigil.plates.nameplate3
+local o3 = Vantage.plates.nameplate3
 H.units.nameplate3.casting = {
     name = "Totally Unknown Spell", spellID = 99999,
     startMS = H.now * 1000, endMS = (H.now + 3) * 1000,
@@ -353,14 +375,14 @@ local hb1 = uf1.healthBar
 hb1:SetValue(80)              -- health going UP never bites
 hb1:SetValue(55)              -- health lost -> a bite spawns
 hb1:SetValue(40)              -- rapid second hit -> coalesces into the same bite
-ok(uf1.__vigilBite ~= nil and uf1.__vigilBiteTex:IsShown(), "bite live and coalesced")
+ok(uf1.__vantageBite ~= nil and uf1.__vantageBiteTex:IsShown(), "bite live and coalesced")
 H.Advance(0.6)
-ok(uf1.__vigilBite == nil and not uf1.__vigilBiteTex:IsShown(), "bite faded and retired")
+ok(uf1.__vantageBite == nil and not uf1.__vantageBiteTex:IsShown(), "bite faded and retired")
 
-ok(uf1.__vigilExec and uf1.__vigilExec:IsShown(), "execute tick shown")
-ok(uf1.__vigilExec.__vg > 0.9, "execute tick quiet above 20%")
+ok(uf1.__vantageExec and uf1.__vantageExec:IsShown(), "execute tick shown")
+ok(uf1.__vantageExec.__vg > 0.9, "execute tick quiet above 20%")
 hb1:SetValue(15)              -- into execute range
-ok(uf1.__vigilExec.__vg < 0.5, "execute tick lit below 20%")
+ok(uf1.__vantageExec.__vg < 0.5, "execute tick lit below 20%")
 
 H.FireEvent("PLAYER_TARGET_CHANGED") -- target is nameplate1
 eq(uf2.__alpha, 0.5, "non-target plate faded to focusAlpha")
@@ -371,7 +393,7 @@ eq(o2.__alpha, 0.5, "non-target cast overlay faded too")
 H.alias.nameplate2target = "player" -- the mob is targeting me
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
-local b2 = uf2.__vigilBorder.edges[1]
+local b2 = uf2.__vantageBorder.edges[1]
 ok(b2.__vr == 0 and b2.__vg == 0, "solo: no aggro border even when targeted")
 
 -- GROUPED: mob targeting me -> red border (ground truth, no threat table)
@@ -387,7 +409,7 @@ ok(bc and bc[1] == 1 and bc[2] < 0.4, "grouped: mob on ME -> alarm-red BAR")
 H.alias.nameplate1target = "player"
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")
 H.Advance(0.3)
-local b1 = uf1.__vigilBorder.edges[1]
+local b1 = uf1.__vantageBorder.edges[1]
 ok(b1.__vg and b1.__vg > 0.5, "target keeps accent border over threat")
 
 -- mob switches to a groupmate -> red clears (dps mode: not your problem)
@@ -443,39 +465,39 @@ H.Advance(0.3)
 
 H.alias.mouseover = "nameplate2"
 H.FireEvent("UPDATE_MOUSEOVER_UNIT")
-ok(uf2.__vigilHover:IsShown(), "hover wash on mouseover plate")
+ok(uf2.__vantageHover:IsShown(), "hover wash on mouseover plate")
 H.alias.mouseover = nil
 H.Advance(0.4)
-ok(not uf2.__vigilHover:IsShown(), "hover wash retired when mouse leaves")
+ok(not uf2.__vantageHover:IsShown(), "hover wash retired when mouse leaves")
 
 -- 12. Plate despawn releases cleanly; slash commands and export run
 -- 12a. First: a duplicate ADDED (missed REMOVED) must release the stale
 -- overlay instead of leaking it as a ghost bar
-local oGhost = Vigil.plates.nameplate1
+local oGhost = Vantage.plates.nameplate1
 oGhost:ShowCast("Ghost Cast", nil, 3)
 ok(oGhost.castbar:IsShown(), "setup: stale cast showing before duplicate ADDED")
 H.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
-local oFresh = Vigil.plates.nameplate1
+local oFresh = Vantage.plates.nameplate1
 ok(oFresh ~= nil and not oFresh.castbar:IsShown(),
     "duplicate ADDED releases the stale overlay (no ghost cast bar)")
 
 H.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
-ok(Vigil.plates.nameplate1 == nil, "overlay released on plate removal")
+ok(Vantage.plates.nameplate1 == nil, "overlay released on plate removal")
 
-SlashCmdList["VIGIL"]("check")
-SlashCmdList["VIGIL"]("parse")
-SlashCmdList["VIGIL"]("test")   -- demo on target (nameplate1 is gone; target alias too)
+SlashCmdList["VANTAGE"]("check")
+SlashCmdList["VANTAGE"]("parse")
+SlashCmdList["VANTAGE"]("test")   -- demo on target (nameplate1 is gone; target alias too)
 H.alias.target = "nameplate2"
-SlashCmdList["VIGIL"]("test")
+SlashCmdList["VANTAGE"]("test")
 
-local export = Vigil.ParseExport:BuildExport()
+local export = Vantage.ParseExport:BuildExport()
 ok(type(export) == "string" and export:find('"sessions"', 1, true) ~= nil, "export builds JSON")
 ok(export:find('"miss":true', 1, true) ~= nil, "export contains the let-through row")
 ok(export:find('"roster"', 1, true) ~= nil and export:find("Kickbot", 1, true) ~= nil,
     "export carries the roster profiles")
 
--- plate inspector (/vigil plate): dumps the frame tree with parentKeys
-local dump = Vigil.Inspect:DumpPlate(H.units.nameplate2.plate)
+-- plate inspector (/vantage plate): dumps the frame tree with parentKeys
+local dump = Vantage.Inspect:DumpPlate(H.units.nameplate2.plate)
 ok(dump:find("healthBar", 1, true) ~= nil, "inspector dump names the health bar")
 ok(dump:find("[border]", 1, true) ~= nil, "inspector dump names the border art")
 ok(dump:find("[LevelFrame]", 1, true) ~= nil, "inspector dump names the level frame")
@@ -487,7 +509,7 @@ for _, f in ipairs(H.frames) do
         f:Click()
     end
 end
-SlashCmdList["VIGIL"]("help")
+SlashCmdList["VANTAGE"]("help")
 
 -- ---------------------------------------------------------------------------
 -- Report

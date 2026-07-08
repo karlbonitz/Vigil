@@ -1,6 +1,6 @@
 -- tests/wow_stub.lua
 --
--- A headless mock of the slice of the WoW 2.5.x API that Vigil touches, so the
+-- A headless mock of the slice of the WoW 2.5.x API that Vantage touches, so the
 -- whole addon can be loaded and driven under plain Lua 5.1 (via lupa) — the
 -- closest thing to an in-game smoke test that runs in CI.
 --
@@ -564,5 +564,5 @@ function Harness.LoadAddonFile(path, ns)
     fh:close()
     local chunk, err = loadstring(src, "@" .. path)
     if not chunk then error(err, 0) end
-    chunk("Vigil", ns)
+    chunk("Vantage", ns)
 end

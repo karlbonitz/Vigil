@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vigil Parse</title>
+<title>Vantage Parse</title>
 </head>
 <body>
-<!-- VIGIL:FRAGMENT-START -->
+<!-- VANTAGE:FRAGMENT-START -->
 <style>
-  /* Vigil Parse — committed single-theme dark page (matches the in-game addon identity). */
+  /* Vantage Parse — committed single-theme dark page (matches the in-game addon identity). */
   :root {
     --bg:      #0e1013;
     --panel:   #14171c;
@@ -153,14 +153,14 @@
 
 <div class="wrap">
   <header class="masthead">
-    <h1 class="wordmark"><span class="v">VIGIL</span> <span class="p">PARSE</span></h1>
-    <span class="tagline">The utility parse — interrupt efficiency from your Vigil sessions.</span>
+    <h1 class="wordmark"><span class="v">VANTAGE</span> <span class="p">PARSE</span></h1>
+    <span class="tagline">The utility parse — interrupt efficiency from your Vantage sessions.</span>
   </header>
   <p class="privacy"><strong>Everything decodes in your browser.</strong> Nothing is uploaded anywhere.</p>
 
   <div class="panel" id="importPanel">
     <ol class="steps">
-      <li>In game, type <code>/vigil export</code> — a window opens with your session data pre-selected.</li>
+      <li>In game, type <code>/vantage export</code> — a window opens with your session data pre-selected.</li>
       <li>Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy it.</li>
       <li>Paste it below and hit <b style="color:var(--ink)">Build report</b>.</li>
     </ol>
@@ -229,7 +229,7 @@
     </div>
 
     <div id="crewSect">
-      <h2 class="sect">Your crew <span class="sub">every player Vigil has watched land an interrupt — lifetime, across all your sessions</span></h2>
+      <h2 class="sect">Your crew <span class="sub">every player Vantage has watched land an interrupt — lifetime, across all your sessions</span></h2>
       <div class="panel tblWrap">
         <table id="crewTable">
           <thead><tr>
@@ -244,9 +244,9 @@
   </div>
 
   <footer>
-    <span>Vigil Parse · report v2 · works with Vigil 0.5.0+ exports (dungeon splits &amp; crew need 0.9.0+)</span>
+    <span>Vantage Parse · report v2 · works with Vantage 0.5.0+ exports (dungeon splits &amp; crew need 0.9.0+)</span>
     <span>Your data never leaves this page — share links carry it in the URL itself, past the #, which no server ever sees.</span>
-    <span><a href="https://github.com/karlbonitz/Vigil">Vigil on GitHub</a></span>
+    <span><a href="https://github.com/karlbonitz/Vantage">Vantage on GitHub</a></span>
   </footer>
 </div>
 
@@ -264,7 +264,7 @@ function vpPercentile(a, p) {
   return s[Math.min(s.length - 1, Math.max(0, Math.ceil((p / 100) * s.length) - 1))];
 }
 
-/* Aggregate an array of Vigil Parse sessions (the export's `sessions`) into
+/* Aggregate an array of Vantage Parse sessions (the export's `sessions`) into
    totals, a by-spell breakdown, and per-session summaries. */
 function vpAggregate(sessions) {
   const agg = { casts: 0, windows: 0, intMe: 0, intOther: 0, miss: 0, rx: [],
@@ -358,9 +358,9 @@ function vpCrew(roster, sessions) {
 function vpDecode(text) {
   let p;
   try { p = JSON.parse(text.trim()); }
-  catch (e) { throw new Error("That doesn't parse as Vigil export data. In game, open /vigil export and copy the WHOLE text (it's pre-selected — just Ctrl+C), then paste it here."); }
-  if (!p || !Array.isArray(p.sessions)) throw new Error("That's valid JSON but not a Vigil export — expected a top-level \"sessions\" list from /vigil export.");
-  if (p.v !== 1) console.warn('Vigil Parse: unknown export version', p.v, '— attempting to read anyway.');
+  catch (e) { throw new Error("That doesn't parse as Vantage export data. In game, open /vantage export and copy the WHOLE text (it's pre-selected — just Ctrl+C), then paste it here."); }
+  if (!p || !Array.isArray(p.sessions)) throw new Error("That's valid JSON but not a Vantage export — expected a top-level \"sessions\" list from /vantage export.");
+  if (p.v !== 1) console.warn('Vantage Parse: unknown export version', p.v, '— attempting to read anyway.');
   return p;
 }
 
@@ -497,7 +497,7 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
         '</tr>';
     }).join('');
 
-    // --- by-dungeon table (only when rows carry zones — Vigil 0.9.0+) ---
+    // --- by-dungeon table (only when rows carry zones — Vantage 0.9.0+) ---
     $('#zoneSect').style.display = zones.length ? 'block' : 'none';
     $('#zoneTable tbody').innerHTML = zones.map(z =>
       '<tr>' +
@@ -634,7 +634,7 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
       load(vpDecode(await new Response(stream).text()));
     } catch (e) {
       const el = $('#importError');
-      el.textContent = /Vigil|browser/.test(e.message) ? e.message
+      el.textContent = /Vantage|browser/.test(e.message) ? e.message
         : 'This share link is damaged or truncated — ask for a fresh one, or paste the export instead.';
       el.style.display = 'block';
     }
@@ -660,6 +660,6 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
   loadFromHash();
 })();
 </script>
-<!-- VIGIL:FRAGMENT-END -->
+<!-- VANTAGE:FRAGMENT-END -->
 </body>
 </html>

@@ -1,12 +1,12 @@
--- Vigil/Modules/Parse.lua
+-- Vantage/Modules/Parse.lua
 --
--- VIGIL PARSE, phase 1: the in-game collector. Every enemy-cast decision the
+-- VANTAGE PARSE, phase 1: the in-game collector. Every enemy-cast decision the
 -- cue engine makes becomes a row, and combat-log outcomes attach to it:
 --
 --   row = { t (epoch), z (zone), src (caster), sp/sid (spell), pvp,
 --           tier ("ready"/"cd"/"aware"/"locked"/"unknown"),
 --           win  (a kick window was shown to you),
---           tool (the interrupt Vigil offered),
+--           tool (the interrupt Vantage offered),
 --           out  ("int" interrupted / "done" completed / "stop" fizzled / nil open),
 --           by   ("me"/"other", for out=="int"),
 --           rx   (ms from cue shown -> YOUR interrupt landing),
@@ -16,22 +16,22 @@
 -- This is the data Warcraft Logs can't show: not "how many interrupts did you
 -- cast" but "how many casts did you LET THROUGH while your kick sat ready".
 --
--- Storage: VigilParseDB.sessions (SavedVariables — flushes to disk on logout
+-- Storage: VantageParseDB.sessions (SavedVariables — flushes to disk on logout
 -- or /reload). One session per login, oldest sessions pruned. Read-only and
--- cheap: rows only exist for casts Vigil already evaluated on visible plates.
+-- cheap: rows only exist for casts Vantage already evaluated on visible plates.
 --
--- PLUS the ROSTER (VigilParseDB.roster): a durable per-player profile of
--- every FRIENDLY player Vigil ever witnesses landing an interrupt — name,
+-- PLUS the ROSTER (VantageParseDB.roster): a durable per-player profile of
+-- every FRIENDLY player Vantage ever witnesses landing an interrupt — name,
 -- class, total kicks (and how many while grouped with you), favorite tool,
--- first/last seen. Grows across sessions; /vigil roster to browse.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Parse")
+-- first/last seen. Grows across sessions; /vantage roster to browse.
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Parse")
 
 local MAX_SESSIONS = 8     -- keep this many sessions in SavedVariables
 local MAX_ROWS     = 4000  -- per-session row cap (then stop logging, count drops)
 local MAX_ROSTER   = 400   -- profile cap; longest-unseen pruned first
 
-local session              -- current session (last entry in VigilParseDB.sessions)
+local session              -- current session (last entry in VantageParseDB.sessions)
 local openByGuid = {}      -- srcGUID -> its one in-flight row
 local myGUID
 local myInterruptNames = {}
@@ -61,7 +61,7 @@ local function pushRow(row)
     if #rows >= MAX_ROWS then
         session.counters.dropped = session.counters.dropped + 1
         if session.counters.dropped == 1 then
-            Vigil:Print("Parse: session log is full — new casts won't be recorded until next login.")
+            Vantage:Print("Parse: session log is full — new casts won't be recorded until next login.")
         end
         return false
     end
@@ -72,7 +72,7 @@ end
 -- Called by InterruptCue for every evaluated cast; re-evaluations (cooldown
 -- changes mid-cast) update the SAME row via overlay.active.__prow.
 function M:OnDecision(overlay, unit, spellName, code, readyEntry)
-    if not (Vigil.db.parse and session) then return end
+    if not (Vantage.db.parse and session) then return end
     local a = overlay.active
     if not a then return end -- demo casts have no active record; don't log them
 
@@ -138,7 +138,7 @@ end
 
 local function rosterTouch(guid, name, flags, tool)
     if not name or name == "" then return end
-    local roster = VigilParseDB.roster
+    local roster = VantageParseDB.roster
     local e = roster[name]
     if not e then
         if rosterN >= MAX_ROSTER then -- prune the longest-unseen profile
@@ -166,7 +166,7 @@ end
 -- Outcomes from the combat log
 -- ---------------------------------------------------------------------------
 local function onCLEU()
-    if not (Vigil.db.parse and session) then return end
+    if not (Vantage.db.parse and session) then return end
     local _, sub, _, srcGUID, _, _, _, dstGUID = CombatLogGetCurrentEventInfo()
 
     if sub == "SPELL_INTERRUPT" then
@@ -186,11 +186,11 @@ local function onCLEU()
         local _, _, _, _, sName, sFlags, _, _, _, _, _, _, kickSpell = CombatLogGetCurrentEventInfo()
         if isFriendlyPlayer(sFlags) then
             rosterTouch(srcGUID, sName, sFlags, kickSpell)
-            Vigil:Debug("roster: interrupt by", sName, "recorded",
+            Vantage:Debug("roster: interrupt by", sName, "recorded",
                 isGrouped(sFlags) and "(grouped)" or "(bystander)")
         else
-            -- /vigil debug shows WHY a kick was skipped (pet? hostile? odd flags?)
-            Vigil:Debug(("roster: interrupt by %s SKIPPED (flags 0x%x)")
+            -- /vantage debug shows WHY a kick was skipped (pet? hostile? odd flags?)
+            Vantage:Debug(("roster: interrupt by %s SKIPPED (flags 0x%x)")
                 :format(tostring(sName), sFlags or 0))
         end
 
@@ -219,11 +219,11 @@ local function onCLEU()
 end
 
 -- ---------------------------------------------------------------------------
--- Session summary (chat): /vigil parse
+-- Session summary (chat): /vantage parse
 -- ---------------------------------------------------------------------------
 function M:Summary()
     if not session then
-        Vigil:Print("Parse: no session data yet.")
+        Vantage:Print("Parse: no session data yet.")
         return
     end
     local rows = session.rows
@@ -238,7 +238,7 @@ function M:Summary()
         if r.rx then rxSum = rxSum + r.rx; rxN = rxN + 1 end
     end
     local c = session.counters
-    Vigil:Print("Parse — this session:")
+    Vantage:Print("Parse — this session:")
     print(("  enemy casts logged: |cffffffff%d|r%s"):format(#rows,
         c.dropped > 0 and (" (|cffff4444%d dropped, log full|r)"):format(c.dropped) or ""))
     print(("  kick windows shown to you: |cffffd100%d|r"):format(windows))
@@ -250,7 +250,7 @@ function M:Summary()
     end
     print(("  your interrupt casts: %d   wasted on uninterruptible casts: %d")
         :format(c.kickCasts, c.wastedKicks))
-    -- who carried the kicks this session (any friendly player Vigil saw)
+    -- who carried the kicks this session (any friendly player Vantage saw)
     local ks = {}
     for name, n in pairs(session.kickers or {}) do ks[#ks + 1] = { name, n } end
     if #ks > 0 then
@@ -259,12 +259,12 @@ function M:Summary()
         for i = 1, math.min(4, #ks) do parts[#parts + 1] = ("%s %d"):format(ks[i][1], ks[i][2]) end
         print("  interrupts seen from: " .. table.concat(parts, ", "))
     end
-    print("  |cffffd100/vigil export|r — copy this data into the web report")
-    print("  |cffffd100/vigil roster|r — lifetime interrupt profiles of everyone seen")
+    print("  |cffffd100/vantage export|r — copy this data into the web report")
+    print("  |cffffd100/vantage roster|r — lifetime interrupt profiles of everyone seen")
 end
 
 -- ---------------------------------------------------------------------------
--- Roster browser (chat): /vigil roster
+-- Roster browser (chat): /vantage roster
 -- ---------------------------------------------------------------------------
 local function classColored(name, class)
     local c = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
@@ -273,15 +273,15 @@ local function classColored(name, class)
 end
 
 function M:Roster()
-    local roster = VigilParseDB and VigilParseDB.roster
+    local roster = VantageParseDB and VantageParseDB.roster
     if not roster or not next(roster) then
-        Vigil:Print("Roster: no interrupts witnessed yet. Profiles build automatically as Vigil sees friendly players land kicks.")
+        Vantage:Print("Roster: no interrupts witnessed yet. Profiles build automatically as Vantage sees friendly players land kicks.")
         return
     end
     local list = {}
     for name, e in pairs(roster) do list[#list + 1] = { name = name, e = e } end
     table.sort(list, function(a, b) return a.e.kicks > b.e.kicks end)
-    Vigil:Print(("Roster — %d player%s witnessed interrupting (top %d):")
+    Vantage:Print(("Roster — %d player%s witnessed interrupting (top %d):")
         :format(#list, #list == 1 and "" or "s", math.min(10, #list)))
     for i = 1, math.min(10, #list) do
         local name, e = list[i].name, list[i].e
@@ -301,14 +301,14 @@ end
 -- Wiring
 -- ---------------------------------------------------------------------------
 function M:OnEnable()
-    VigilParseDB = VigilParseDB or {}
-    VigilParseDB.sessions = VigilParseDB.sessions or {}
-    VigilParseDB.roster = VigilParseDB.roster or {}
+    VantageParseDB = VantageParseDB or {}
+    VantageParseDB.sessions = VantageParseDB.sessions or {}
+    VantageParseDB.roster = VantageParseDB.roster or {}
     rosterN = 0
-    for _ in pairs(VigilParseDB.roster) do rosterN = rosterN + 1 end
+    for _ in pairs(VantageParseDB.roster) do rosterN = rosterN + 1 end
 
     myGUID = UnitGUID("player")
-    local list = Vigil.ClassInterrupts and Vigil.ClassInterrupts[Vigil.playerClass]
+    local list = Vantage.ClassInterrupts and Vantage.ClassInterrupts[Vantage.playerClass]
     if list then
         for i = 1, #list do myInterruptNames[list[i].spell] = true end
     end
@@ -319,31 +319,31 @@ function M:OnEnable()
             player = UnitName("player"),
             realm  = GetRealmName(),
             class  = class,
-            addon  = Vigil.version,
+            addon  = Vantage.version,
             start  = time(),
         },
         counters = { kickCasts = 0, myInterrupts = 0, wastedKicks = 0, dropped = 0 },
         rows = {},
         kickers = {}, -- name -> interrupts landed this session (any friendly player)
     }
-    table.insert(VigilParseDB.sessions, session)
-    while #VigilParseDB.sessions > MAX_SESSIONS do
-        table.remove(VigilParseDB.sessions, 1)
+    table.insert(VantageParseDB.sessions, session)
+    while #VantageParseDB.sessions > MAX_SESSIONS do
+        table.remove(VantageParseDB.sessions, 1)
     end
 
     local function updateZone()
         zone = GetRealZoneText() or GetZoneText() or ""
     end
     updateZone()
-    Vigil:RegisterEvent("ZONE_CHANGED_NEW_AREA", updateZone)
-    Vigil:RegisterEvent("PLAYER_ENTERING_WORLD", updateZone)
+    Vantage:RegisterEvent("ZONE_CHANGED_NEW_AREA", updateZone)
+    Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", updateZone)
 
-    Vigil:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
+    Vantage:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
 
     -- casts still open when the world unloads can never resolve
-    Vigil:RegisterEvent("PLAYER_LEAVING_WORLD", function()
+    Vantage:RegisterEvent("PLAYER_LEAVING_WORLD", function()
         for guid in pairs(openByGuid) do closeGuid(guid, "?") end
     end)
 end
 
-Vigil.Parse = M
+Vantage.Parse = M

@@ -1,4 +1,4 @@
--- Vigil/Data/InterruptSpells.lua
+-- Vantage/Data/InterruptSpells.lua
 --
 -- Your interrupts, by class, and the logic that answers: "can I stop this cast
 -- RIGHT NOW?" Works for EVERY class, not just the kick classes. Entries can be
@@ -22,11 +22,11 @@
 -- Readiness for normal entries is GetSpellCooldown(name): nil if the spell isn't in
 -- your spellbook, so the cue auto-"turns on" as you learn/spec abilities (e.g. a
 -- Priest gains FEAR at ~level 14). Pet abilities are read from the pet bar instead
--- (GetSpellCooldown can't see them). Listed best-first; Vigil uses the first one you
+-- (GetSpellCooldown can't see them). Listed best-first; Vantage uses the first one you
 -- know that's ready and gate-valid.
-local addonName, Vigil = ...
+local addonName, Vantage = ...
 
-Vigil.ClassInterrupts = {
+Vantage.ClassInterrupts = {
     WARRIOR = {
         { spell = "Pummel",          label = "PUMMEL",      soft = false, form = 3 },                          -- Berserker stance only
         { spell = "Shield Bash",     label = "SHIELD BASH", soft = false, forms = { 1, 2 }, needsShield = true }, -- Battle/Defensive + shield
@@ -88,7 +88,7 @@ local function GetPetSpellCooldown(name)
     end
     return nil
 end
-Vigil.GetPetSpellCooldown = GetPetSpellCooldown
+Vantage.GetPetSpellCooldown = GetPetSpellCooldown
 
 -- True only when an actual shield occupies the off-hand (slot 17) — Shield Bash gate.
 local function HasShield()
@@ -114,11 +114,11 @@ end
 
 -- Is this ONE entry usable right now: known, off cooldown, and all of its gates
 -- (creature type / stance / form / shield / pet / combo) satisfied?
-function Vigil:EntryReady(e, unit)
+function Vantage:EntryReady(e, unit)
     if not typeOK(e, unit) then return false end
     -- soft CC is wasted on an immune target — suppress the cue there (fail-open if the
     -- immunity layer somehow didn't load). Hard kicks carry no mechanic and skip this.
-    if e.soft and Vigil.TargetSusceptible and not Vigil:TargetSusceptible(unit, e.mechanic) then
+    if e.soft and Vantage.TargetSusceptible and not Vantage:TargetSusceptible(unit, e.mechanic) then
         return false
     end
 
@@ -157,7 +157,7 @@ end
 -- nil when the API can't answer — pet abilities (Spell Lock) live outside the
 -- player spellbook, and some spells just report nil. Callers must treat nil as
 -- "don't suppress": we only ever mute the cue on an EXPLICIT out-of-range.
-function Vigil:EntryInRange(e, unit)
+function Vantage:EntryInRange(e, unit)
     if not unit or e.pet or not IsSpellInRange then return nil end
     local r = IsSpellInRange(e.spell, unit)
     if r == 1 then return true elseif r == 0 then return false end
@@ -170,7 +170,7 @@ end
 --   nil           -> nothing ready
 -- Prefers an in-range entry over an earlier out-of-range one, so a Rogue too far
 -- for Kick still gets an in-range alternative when one exists.
-function Vigil:GetReadyInterrupt(unit)
+function Vantage:GetReadyInterrupt(unit)
     local list = self.ClassInterrupts[self.playerClass]
     if not list then return nil end
     local tooFar
@@ -189,7 +189,7 @@ end
 
 -- Is `name` one of YOUR class's interrupt tools? (CastWatch uses this to spot
 -- a kick you just spent on a cast marked do-not-kick.)
-function Vigil:IsMyInterrupt(name)
+function Vantage:IsMyInterrupt(name)
     local list = self.ClassInterrupts[self.playerClass]
     if not list then return false end
     for i = 1, #list do
@@ -202,12 +202,12 @@ end
 -- type-valid, and the target not immune to its mechanic? Ignores cooldown/stance, so it
 -- distinguishes "on cooldown" (muted cue) from "nothing of mine can stop this" (awareness
 -- only). `unit` is optional (nil = ignore type/immunity, used by the demo).
-function Vigil:HasInterrupt(unit)
+function Vantage:HasInterrupt(unit)
     local list = self.ClassInterrupts[self.playerClass]
     if not list then return false end
     for i = 1, #list do
         local e = list[i]
-        local ccOK = (not e.soft) or (not Vigil.TargetSusceptible) or Vigil:TargetSusceptible(unit, e.mechanic)
+        local ccOK = (not e.soft) or (not Vantage.TargetSusceptible) or Vantage:TargetSusceptible(unit, e.mechanic)
         if typeOK(e, unit) and ccOK then
             local learned
             if e.pet then learned = (GetPetSpellCooldown(e.spell) ~= nil)

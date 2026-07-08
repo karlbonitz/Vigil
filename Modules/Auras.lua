@@ -1,4 +1,4 @@
--- Vigil/Modules/Auras.lua
+-- Vantage/Modules/Auras.lua
 --
 -- Your own debuffs/DoTs on each enemy nameplate, with live countdowns — so you
 -- know exactly when to refresh Shadow Word: Pain (and friends). It scans with the
@@ -9,8 +9,8 @@
 -- purple, …), a radial cooldown swipe draining as the aura expires, countdown
 -- text (red inside the 3s refresh window), stack counts. Icon size and the
 -- per-plate cap are user-configurable (the cap keeps 25-man raids readable).
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Auras")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Auras")
 
 local GAP      = 2
 local TEXT_HZ  = 0.1    -- countdown text refresh
@@ -20,16 +20,16 @@ local rows = {}         -- unit -> row frame
 local pool = {}
 local scan = {}         -- reused scratch table (avoids garbage each scan)
 
-local function iconSize() return Vigil.db.auraSize or 18 end
-local function maxIcons() return Vigil.db.auraMax or 5 end
+local function iconSize() return Vantage.db.auraSize or 18 end
+local function maxIcons() return Vantage.db.auraMax or 5 end
 
 -- ---------------------------------------------------------------------------
 -- Frame construction / styling
 -- ---------------------------------------------------------------------------
 local function styleButton(b, s)
     b:SetSize(s, s)
-    Vigil:SetFont(b.time, math.max(8, math.floor(s * 0.5)))
-    Vigil:SetFont(b.count, math.max(7, math.floor(s * 0.4)))
+    Vantage:SetFont(b.time, math.max(8, math.floor(s * 0.5)))
+    Vantage:SetFont(b.count, math.max(7, math.floor(s * 0.4)))
 end
 
 local function makeButton(row, i)
@@ -41,7 +41,7 @@ local function makeButton(row, i)
     local bd = b:CreateTexture(nil, "BACKGROUND")
     bd:SetPoint("TOPLEFT", -1, 1)
     bd:SetPoint("BOTTOMRIGHT", 1, -1)
-    bd:SetTexture(Vigil.WHITE)
+    bd:SetTexture(Vantage.WHITE)
     bd:SetVertexColor(0, 0, 0, 1)
     b.bd = bd
 
@@ -149,8 +149,8 @@ end
 -- Scan / refresh
 -- ---------------------------------------------------------------------------
 function M:Refresh(unit)
-    if not Vigil.db.auras then return self:Remove(unit) end
-    local overlay = Vigil.plates[unit]
+    if not Vantage.db.auras then return self:Remove(unit) end
+    local overlay = Vantage.plates[unit]
     if not overlay or not overlay.plate then return end
 
     wipe(scan)
@@ -179,8 +179,8 @@ function M:Refresh(unit)
         row:SetPoint("BOTTOM", overlay.plate, "TOP", 0, 6)
     end
     -- a row (re)appearing mid-fight inherits the current focus fade
-    if Vigil.Skin and Vigil.Skin.CurrentDim then
-        row:SetAlpha(Vigil.Skin.CurrentDim(unit))
+    if Vantage.Skin and Vantage.Skin.CurrentDim then
+        row:SetAlpha(Vantage.Skin.CurrentDim(unit))
     end
 
     local size = iconSize()
@@ -197,14 +197,14 @@ function M:Refresh(unit)
         -- the same aura gets a new start time, so it pops too — good feedback)
         local key = tostring(s.icon) .. "|"
             .. tostring(math.floor(((s.expiration or 0) - (s.duration or 0)) * 10))
-        if b.__vigilKey ~= key then
-            b.__vigilKey = key
+        if b.__vantageKey ~= key then
+            b.__vantageKey = key
             b.t = 0
             b:SetScale(1.25)
             b:SetScript("OnUpdate", auraPop)
         end
 
-        local col = Vigil.db.auraDispel and s.dispel
+        local col = Vantage.db.auraDispel and s.dispel
             and DebuffTypeColor and DebuffTypeColor[s.dispel]
         if col then
             b.bd:SetVertexColor(col.r, col.g, col.b, 1)
@@ -213,7 +213,7 @@ function M:Refresh(unit)
         end
 
         if b.cd then
-            if Vigil.db.auraSwipe and s.duration and s.duration > 0 then
+            if Vantage.db.auraSwipe and s.duration and s.duration > 0 then
                 local start = s.expiration - s.duration
                 if b.cdStart ~= start or b.cdDur ~= s.duration then
                     b.cdStart, b.cdDur = start, s.duration
@@ -258,8 +258,8 @@ function M:Remove(unit)
 end
 
 function M:RefreshAll()
-    if Vigil.db.auras then
-        for unit in pairs(Vigil.plates) do self:Refresh(unit) end
+    if Vantage.db.auras then
+        for unit in pairs(Vantage.plates) do self:Refresh(unit) end
     else
         for unit in pairs(rows) do self:Remove(unit) end
     end
@@ -269,8 +269,8 @@ end
 -- Wiring
 -- ---------------------------------------------------------------------------
 function M:OnEnable()
-    Vigil:RegisterEvent("UNIT_AURA", function(_, unit)
-        if Vigil.plates[unit] then M:Refresh(unit) end
+    Vantage:RegisterEvent("UNIT_AURA", function(_, unit)
+        if Vantage.plates[unit] then M:Refresh(unit) end
     end)
 
     -- One shared ticker: ticks countdown text frequently, rescans occasionally
@@ -288,10 +288,10 @@ function M:OnEnable()
         end
         if sAccum >= SCAN_HZ then
             sAccum = 0
-            for unit in pairs(Vigil.plates) do M:Refresh(unit) end
+            for unit in pairs(Vantage.plates) do M:Refresh(unit) end
         end
     end)
     M.ticker = ticker
 end
 
-Vigil.Auras = M
+Vantage.Auras = M

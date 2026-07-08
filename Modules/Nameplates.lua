@@ -1,4 +1,4 @@
--- Vigil/Modules/Nameplates.lua
+-- Vantage/Modules/Nameplates.lua
 --
 -- Tracks enemy nameplates and owns the per-plate "overlay" (our own frames that
 -- ride on top of Blizzard's plate). We NEVER reparent, move, or touch the secure
@@ -7,11 +7,11 @@
 --
 -- The overlay frame stays shown while its plate exists (so the threat strip can
 -- render between casts); the cast-bar elements show/hide per cast.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Nameplates")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Nameplates")
 
-Vigil.plates     = {}  -- unit token ("nameplate3") -> overlay
-Vigil.guidToUnit = {}  -- GUID -> unit token (so CLEU can find the right plate)
+Vantage.plates     = {}  -- unit token ("nameplate3") -> overlay
+Vantage.guidToUnit = {}  -- GUID -> unit token (so CLEU can find the right plate)
 
 local pool = {}        -- recycled overlays
 
@@ -34,7 +34,7 @@ local castOnUpdate = function(cb)
     end
     cb.spark:SetPoint("CENTER", cb, "LEFT", cb:GetValue() * cb:GetWidth(), 0)
     -- 0.05 floor: never render a "0.0" frame (pushback can hover there)
-    if Vigil.db.showCastTime and remaining >= 0.05 and not o.padlock:IsShown() then
+    if Vantage.db.showCastTime and remaining >= 0.05 and not o.padlock:IsShown() then
         o.timeText:SetFormattedText("%.1f", remaining)
     else
         o.timeText:SetText("")
@@ -76,7 +76,7 @@ end
 local function anchorKick(o, hb)
     local kf = o.kickF
     kf:ClearAllPoints()
-    if hb and Vigil.db.labelPos ~= "above" then
+    if hb and Vantage.db.labelPos ~= "above" then
         kf:SetPoint("CENTER", hb, "CENTER", 0, 0)
     else
         kf:SetPoint("BOTTOM", o, "TOP", 0, 12)
@@ -142,9 +142,9 @@ local function CreateOverlay()
     glow:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 12, -10)
     local gtex = glow:CreateTexture(nil, "BACKGROUND")
     gtex:SetAllPoints(glow)
-    gtex:SetTexture(Vigil.GLOW)
+    gtex:SetTexture(Vantage.GLOW)
     gtex:SetBlendMode("ADD")
-    gtex:SetVertexColor(Vigil:RGB("kick"))
+    gtex:SetVertexColor(Vantage:RGB("kick"))
     glow:Hide()
     local ag = glow:CreateAnimationGroup()
     local a = ag:CreateAnimation("Alpha")
@@ -156,7 +156,7 @@ local function CreateOverlay()
     local cb = CreateFrame("StatusBar", nil, f)
     cb:SetAllPoints(f)
     cb:SetFrameLevel(base + 3)
-    cb:SetStatusBarTexture(Vigil.BAR)
+    cb:SetStatusBarTexture(Vantage.BAR)
     cb:SetMinMaxValues(0, 1)
     cb.overlay = f
     cb.onUpdate = castOnUpdate
@@ -166,7 +166,7 @@ local function CreateOverlay()
     bg:SetAllPoints(cb)
     bg:SetColorTexture(0.04, 0.04, 0.05, 0.85)
 
-    cb.border = Vigil:CreateBorder(cb)
+    cb.border = Vantage:CreateBorder(cb)
 
     local spark = cb:CreateTexture(nil, "OVERLAY")
     spark:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
@@ -176,7 +176,7 @@ local function CreateOverlay()
 
     -- 1px glass highlight along the top, matching the health-bar skin
     local glass = cb:CreateTexture(nil, "OVERLAY")
-    glass:SetTexture(Vigil.WHITE)
+    glass:SetTexture(Vantage.WHITE)
     glass:SetVertexColor(1, 1, 1, 0.10)
     glass:SetPoint("TOPLEFT", cb, 0, 0)
     glass:SetPoint("TOPRIGHT", cb, 0, 0)
@@ -208,7 +208,7 @@ local function CreateOverlay()
     local kick = kickF:CreateFontString(nil, "OVERLAY")
     kick:SetFont(STANDARD_TEXT_FONT, 15, "THICKOUTLINE")
     kick:SetPoint("CENTER", kickF, "CENTER", 0, 0)
-    kick:SetTextColor(Vigil:RGB("kick"))
+    kick:SetTextColor(Vantage:RGB("kick"))
     kickF:Hide()
     kickF.overlay = f -- wastedPop's route back to HideKick
     f.kickF, f.kickText = kickF, kick
@@ -230,7 +230,7 @@ local function CreateOverlay()
     -- empty bar rendered as a ghost grey bar under every new plate until
     -- the frame was recycled. Pooled frames were clean (Release resets).
     local strip = f:CreateTexture(nil, "OVERLAY")
-    strip:SetTexture(Vigil.BAR)
+    strip:SetTexture(Vantage.BAR)
     strip:SetHeight(3)
     strip:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 0, 1)
     strip:SetPoint("BOTTOMRIGHT", f, "TOPRIGHT", 0, 1)
@@ -241,11 +241,11 @@ local function CreateOverlay()
     function f:ShowKick(label)
         if self.kickIsMate then self:HideKick() end -- your shout displaces the hint
         self.kickText:SetText(label or "INTERRUPT")
-        self.kickText:SetTextColor(Vigil:RGB("kick")) -- may be red from a WASTED flash
-        self.glowTex:SetVertexColor(Vigil:RGB("kick")) -- accent-aware, per show
+        self.kickText:SetTextColor(Vantage:RGB("kick")) -- may be red from a WASTED flash
+        self.glowTex:SetVertexColor(Vantage:RGB("kick")) -- accent-aware, per show
         self:SetAlpha(1) -- the cue punches through the focus fade, always
-        if Vigil.Skin and Vigil.Skin.CueTextSuppress then
-            Vigil.Skin:CueTextSuppress(self.unit, true) -- the shout gets the bar to itself
+        if Vantage.Skin and Vantage.Skin.CueTextSuppress then
+            Vantage.Skin:CueTextSuppress(self.unit, true) -- the shout gets the bar to itself
         end
         local kf = self.kickF
         if not kf:IsShown() then
@@ -255,7 +255,7 @@ local function CreateOverlay()
             kf:SetScript("OnUpdate", kickPop)
             -- sound rides the pop-in: once per cue, not once per re-evaluation
             -- (cooldown updates re-run Evaluate many times during one cast)
-            Vigil:PlayInterruptSound()
+            Vantage:PlayInterruptSound()
         end
         self.glow:Show()
         self.glowAnim:Play()
@@ -272,8 +272,8 @@ local function CreateOverlay()
         self.kickText:SetTextColor(r or 1, g or 1, b or 1)
         self.kickF:SetScale(0.85)
         self.kickF:Show()
-        if Vigil.Skin and Vigil.Skin.CueTextSuppress then
-            Vigil.Skin:CueTextSuppress(self.unit, true) -- shares the center slot
+        if Vantage.Skin and Vantage.Skin.CueTextSuppress then
+            Vantage.Skin:CueTextSuppress(self.unit, true) -- shares the center slot
         end
     end
 
@@ -284,12 +284,12 @@ local function CreateOverlay()
         self.kickF:SetScale(1)
         self.glow:Hide()
         self.glowAnim:Stop()
-        if self.unit and Vigil.Skin and Vigil.Skin.CueTextSuppress then
-            Vigil.Skin:CueTextSuppress(self.unit, false) -- level/HP text returns
+        if self.unit and Vantage.Skin and Vantage.Skin.CueTextSuppress then
+            Vantage.Skin:CueTextSuppress(self.unit, false) -- level/HP text returns
         end
         -- cue gone: fall back into the focus fade (if one is in effect)
-        if self.unit and Vigil.Skin and Vigil.Skin.CurrentDim then
-            self:SetAlpha(Vigil.Skin.CurrentDim(self.unit))
+        if self.unit and Vantage.Skin and Vantage.Skin.CurrentDim then
+            self:SetAlpha(Vantage.Skin.CurrentDim(self.unit))
         end
     end
 
@@ -298,7 +298,7 @@ local function CreateOverlay()
     -- padlock red (you spent a kick on a do-not-kick cast). Visual only, no
     -- sound; the label rides the countdown's right-aligned slot.
     function f:FlashOutcome(color, label)
-        if not Vigil.db.outcomeFlash then self:Reset(); return end
+        if not Vantage.db.outcomeFlash then self:Reset(); return end
         if self.flashing or not self.castbar:IsShown() then return end
         local cb = self.castbar
         self.flashing = color
@@ -307,7 +307,7 @@ local function CreateOverlay()
         self:HideKick()
         self.padlock:Hide()
         cb:SetValue(1)
-        cb:SetStatusBarColor(Vigil:RGB(color))
+        cb:SetStatusBarColor(Vantage:RGB(color))
         self.timeText:SetText(label)
         self.timeText:SetTextColor(1, 1, 1)
         cb:SetScript("OnUpdate", flashOnUpdate)
@@ -315,16 +315,16 @@ local function CreateOverlay()
 
     -- see wastedPop: label-only verdict, the (still-casting) bar stays intact
     function f:FlashWasted()
-        if not Vigil.db.outcomeFlash then return end
+        if not Vantage.db.outcomeFlash then return end
         local kf = self.kickF
         self.kickText:SetText("WASTED")
-        self.kickText:SetTextColor(Vigil:RGB("locked"))
+        self.kickText:SetTextColor(Vantage:RGB("locked"))
         kf.t = 0
         kf:SetScale(1.4)
         kf:Show()
         kf:SetScript("OnUpdate", wastedPop)
-        if Vigil.Skin and Vigil.Skin.CueTextSuppress then
-            Vigil.Skin:CueTextSuppress(self.unit, true) -- WASTED sits center-bar too
+        if Vantage.Skin and Vantage.Skin.CueTextSuppress then
+            Vantage.Skin:CueTextSuppress(self.unit, true) -- WASTED sits center-bar too
         end
     end
 
@@ -355,10 +355,10 @@ local function CreateOverlay()
         self.iconF:SetAlpha(1)
         self.flashing = nil
         self.timeText:SetTextColor(0.95, 0.95, 0.95)
-        self.icon:SetTexture(iconTex or Vigil.QUESTION_ICON)
+        self.icon:SetTexture(iconTex or Vantage.QUESTION_ICON)
         self.name:SetText(spellName or "")
         self.timeText:SetText("")
-        cb:SetStatusBarColor(Vigil:RGB(channeling and "channel" or "cast"))
+        cb:SetStatusBarColor(Vantage:RGB(channeling and "channel" or "cast"))
         self.padlock:Hide()
         self:HideKick()
         local ic = self.iconF
@@ -377,22 +377,22 @@ end
 -- Style knobs that can change at runtime (cast bar height, bar fill, fonts).
 -- Runs per Acquire and live via M:ApplyStyle when an option moves.
 local function styleOverlay(o)
-    local h = Vigil.db.castBarHeight or BAR_H
+    local h = Vantage.db.castBarHeight or BAR_H
     o:SetHeight(h)
     o.iconF:SetSize(h + 2, h + 2)
-    o.castbar:SetStatusBarTexture(Vigil:BarTex())
-    Vigil:SetFont(o.timeText, 8)
-    Vigil:SetFont(o.name, 8)
-    Vigil:SetFont(o.kickText, 15, "THICKOUTLINE") -- the shout stays THICK by design
+    o.castbar:SetStatusBarTexture(Vantage:BarTex())
+    Vantage:SetFont(o.timeText, 8)
+    Vantage:SetFont(o.name, 8)
+    Vantage:SetFont(o.kickText, 15, "THICKOUTLINE") -- the shout stays THICK by design
 end
 
 function M:ApplyStyle()
-    for _, o in pairs(Vigil.plates or {}) do styleOverlay(o) end
+    for _, o in pairs(Vantage.plates or {}) do styleOverlay(o) end
 end
 
 local function Acquire()
     local o = table.remove(pool) or CreateOverlay()
-    o:SetScale(Vigil.db.scale or 1)
+    o:SetScale(Vantage.db.scale or 1)
     styleOverlay(o)
     return o
 end
@@ -413,23 +413,23 @@ end
 -- ---------------------------------------------------------------------------
 function M:OnEnable()
     if not C_NamePlate then
-        Vigil:Print("This client has no nameplate API (C_NamePlate) — Vigil can't run here.")
+        Vantage:Print("This client has no nameplate API (C_NamePlate) — Vantage can't run here.")
         return
     end
-    Vigil:RegisterEvent("NAME_PLATE_UNIT_ADDED",   function(_, unit) M:OnAdded(unit) end)
-    Vigil:RegisterEvent("NAME_PLATE_UNIT_REMOVED", function(_, unit) M:OnRemoved(unit) end)
+    Vantage:RegisterEvent("NAME_PLATE_UNIT_ADDED",   function(_, unit) M:OnAdded(unit) end)
+    Vantage:RegisterEvent("NAME_PLATE_UNIT_REMOVED", function(_, unit) M:OnRemoved(unit) end)
 end
 
 function M:OnAdded(unit)
-    if not Vigil.db.enabled then return end
+    if not Vantage.db.enabled then return end
 
     -- a re-ADD for a token we still hold means we missed the REMOVED event —
     -- release the old overlay or it leaks, haunting the screen with a stale
     -- bar anchored to a plate it no longer owns
-    local stale = Vigil.plates[unit]
+    local stale = Vantage.plates[unit]
     if stale then
-        Vigil.plates[unit] = nil
-        if stale.guid then Vigil.guidToUnit[stale.guid] = nil end
+        Vantage.plates[unit] = nil
+        if stale.guid then Vantage.guidToUnit[stale.guid] = nil end
         Release(stale)
     end
 
@@ -462,36 +462,36 @@ function M:OnAdded(unit)
     o:Show()
     o.unit = unit
     -- spawning mid-fight inherits the current focus fade
-    if Vigil.Skin and Vigil.Skin.CurrentDim then
-        o:SetAlpha(Vigil.Skin.CurrentDim(unit))
+    if Vantage.Skin and Vantage.Skin.CurrentDim then
+        o:SetAlpha(Vantage.Skin.CurrentDim(unit))
     end
-    Vigil.plates[unit] = o
+    Vantage.plates[unit] = o
 
     local guid = UnitGUID(unit)
-    if guid then Vigil.guidToUnit[guid] = unit end
+    if guid then Vantage.guidToUnit[guid] = unit end
     o.guid = guid
 
     -- catch a cast already in progress when the plate appears
-    if Vigil.CastWatch then Vigil.CastWatch:Refresh(unit) end
-    if Vigil.Auras then Vigil.Auras:Refresh(unit) end
+    if Vantage.CastWatch then Vantage.CastWatch:Refresh(unit) end
+    if Vantage.Auras then Vantage.Auras:Refresh(unit) end
 end
 
 -- Re-apply the label-position setting to every live plate (options dropdown).
 function M:ReanchorKicks()
-    for _, o in pairs(Vigil.plates) do
+    for _, o in pairs(Vantage.plates) do
         local hb = o.plate and o.plate.UnitFrame and o.plate.UnitFrame.healthBar
         anchorKick(o, hb)
     end
 end
 
 function M:OnRemoved(unit)
-    local o = Vigil.plates[unit]
+    local o = Vantage.plates[unit]
     if not o then return end
-    if o.guid then Vigil.guidToUnit[o.guid] = nil end
-    if Vigil.Auras then Vigil.Auras:Remove(unit) end
+    if o.guid then Vantage.guidToUnit[o.guid] = nil end
+    if Vantage.Auras then Vantage.Auras:Remove(unit) end
     o.plate = nil
-    Vigil.plates[unit] = nil
+    Vantage.plates[unit] = nil
     Release(o)
 end
 
-Vigil.Nameplates = M
+Vantage.Nameplates = M

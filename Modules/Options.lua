@@ -1,27 +1,27 @@
--- Vigil/Modules/Options.lua
+-- Vantage/Modules/Options.lua
 --
 -- A native options panel registered in the game's AddOns settings, opened with
--- /vigil. No external libraries. It reads/writes the exact same VigilDB fields
+-- /vantage. No external libraries. It reads/writes the exact same VantageDB fields
 -- the slash commands use, and the modules read those live, so every change
 -- applies immediately — sliders restyle plates as you drag.
 --
 -- Blizzard changed the options API (old InterfaceOptions -> new Settings); we
 -- feature-detect and support whichever the client has.
-local addonName, Vigil = ...
-local M = Vigil:NewModule("Options")
+local addonName, Vantage = ...
+local M = Vantage:NewModule("Options")
 
 local PAD  = 16    -- left margin
 local COL2 = 300   -- second column x
 
 -- refresh hooks shared by several widgets
 local function refreshSkin()
-    if Vigil.Skin then Vigil.Skin:RefreshAll() end
+    if Vantage.Skin then Vantage.Skin:RefreshAll() end
 end
 local function refreshAuras()
-    if Vigil.Auras then Vigil.Auras:ApplyStyle(); Vigil.Auras:RefreshAll() end
+    if Vantage.Auras then Vantage.Auras:ApplyStyle(); Vantage.Auras:RefreshAll() end
 end
 local function refreshOverlays()
-    if Vigil.Nameplates and Vigil.Nameplates.ApplyStyle then Vigil.Nameplates:ApplyStyle() end
+    if Vantage.Nameplates and Vantage.Nameplates.ApplyStyle then Vantage.Nameplates:ApplyStyle() end
 end
 -- fonts / bar fill touch every module at once
 local function restyleAll()
@@ -30,18 +30,18 @@ local function restyleAll()
     refreshAuras()
 end
 local function applyScale()
-    for _, o in pairs(Vigil.plates or {}) do o:SetScale(Vigil.db.scale or 1) end
+    for _, o in pairs(Vantage.plates or {}) do o:SetScale(Vantage.db.scale or 1) end
 end
 
 local nWidgets = 0
 local function wname()
     nWidgets = nWidgets + 1
-    return "VigilOpt" .. nWidgets
+    return "VantageOpt" .. nWidgets
 end
 
 function M:OnEnable()
     local panel = CreateFrame("Frame")
-    panel.name = "Vigil"
+    panel.name = "Vantage"
 
     -- everything lives on a scrollable content frame — the option set outgrew
     -- the legacy InterfaceOptions canvas, and scrolling ends that arms race
@@ -61,7 +61,7 @@ function M:OnEnable()
         h:SetPoint("TOPLEFT", PAD, y)
         h:SetText(text)
         local line = content:CreateTexture(nil, "ARTWORK")
-        line:SetTexture(Vigil.WHITE)
+        line:SetTexture(Vantage.WHITE)
         line:SetVertexColor(1, 0.82, 0.1, 0.25)
         line:SetHeight(1)
         line:SetPoint("TOPLEFT", PAD, y - 15)
@@ -78,7 +78,7 @@ function M:OnEnable()
         text:SetText(label)
         cb.key = key
         cb:SetScript("OnClick", function(self)
-            Vigil.db[key] = self:GetChecked() and true or false
+            Vantage.db[key] = self:GetChecked() and true or false
             if onChange then onChange() end
         end)
         if tip then
@@ -102,7 +102,7 @@ function M:OnEnable()
 
     -- Hand-rolled slider. The 2.5.5 client's OptionsSliderTemplate renders
     -- with no track art (transparent groove, thumb adrift of the labels), so
-    -- Vigil draws its own — dark groove, 1px edges, accent thumb — and owns
+    -- Vantage draws its own — dark groove, 1px edges, accent thumb — and owns
     -- the alignment. Same lesson as the nameplates: never lean on Blizzard
     -- template art on this client.
     local function slider(x, y, key, label, minV, maxV, step, fmt, onChange)
@@ -118,14 +118,14 @@ function M:OnEnable()
         -- groove: dark fill + 1px edges, drawn on the slider frame itself so
         -- the thumb (ARTWORK layer) always rides above them
         local groove = s:CreateTexture(nil, "BACKGROUND")
-        groove:SetTexture(Vigil.WHITE)
+        groove:SetTexture(Vantage.WHITE)
         groove:SetVertexColor(0.05, 0.05, 0.065, 0.9)
         groove:SetHeight(6)
         groove:SetPoint("LEFT", 0, 0)
         groove:SetPoint("RIGHT", 0, 0)
         local function edge()
             local t = s:CreateTexture(nil, "BORDER")
-            t:SetTexture(Vigil.WHITE)
+            t:SetTexture(Vantage.WHITE)
             t:SetVertexColor(0, 0, 0, 1)
             return t
         end
@@ -136,11 +136,11 @@ function M:OnEnable()
         eR:SetWidth(1);  eR:SetPoint("TOPLEFT", groove, "TOPRIGHT", 0, 1);     eR:SetPoint("BOTTOMLEFT", groove, "BOTTOMRIGHT", 0, -1)
 
         -- thumb: accent-colored, taller than the groove, centered on it
-        s:SetThumbTexture(Vigil.WHITE)
+        s:SetThumbTexture(Vantage.WHITE)
         local th = s:GetThumbTexture()
         th:SetSize(8, 14)
         th:SetDrawLayer("ARTWORK")
-        local tr, tg, tb = Vigil:RGB("kick")
+        local tr, tg, tb = Vantage:RGB("kick")
         th:SetVertexColor(tr, tg, tb)
         s:SetScript("OnEnter", function()
             th:SetVertexColor(math.min(tr + 0.15, 1), math.min(tg + 0.15, 1), math.min(tb + 0.15, 1))
@@ -161,7 +161,7 @@ function M:OnEnable()
         s.updateText = function(v) text:SetText(label .. ": " .. fmtv(fmt, v)) end
         s:SetScript("OnValueChanged", function(_, v)
             v = math.floor(v / step + 0.5) * step
-            Vigil.db[key] = v
+            Vantage.db[key] = v
             s.updateText(v)
             if onChange then onChange() end
         end)
@@ -185,9 +185,9 @@ function M:OnEnable()
             for _, c in ipairs(choices) do
                 local info = UIDropDownMenu_CreateInfo()
                 info.text = c[2]
-                info.checked = (Vigil.db[key] == c[1])
+                info.checked = (Vantage.db[key] == c[1])
                 info.func = function()
-                    Vigil.db[key] = c[1]
+                    Vantage.db[key] = c[1]
                     UIDropDownMenu_SetText(dd, c[2])
                     if onChange then onChange() end
                 end
@@ -202,11 +202,11 @@ function M:OnEnable()
     -- ---- title row ---------------------------------------------------------
     local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", PAD, -16)
-    title:SetText("Vigil")
+    title:SetText("Vantage")
 
     local sub = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-    sub:SetText("Interrupt-smart nameplates  ·  v" .. Vigil.version)
+    sub:SetText("Interrupt-smart nameplates  ·  v" .. Vantage.version)
 
     local reset = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     reset:SetSize(140, 22)
@@ -218,7 +218,7 @@ function M:OnEnable()
     export:SetPoint("RIGHT", reset, "LEFT", -6, 0)
     export:SetText("Export data…")
     export:SetScript("OnClick", function()
-        if Vigil.ParseExport then Vigil.ParseExport:Toggle() end
+        if Vantage.ParseExport then Vantage.ParseExport:Toggle() end
     end)
 
     -- ---- layout ------------------------------------------------------------
@@ -268,9 +268,9 @@ function M:OnEnable()
         for _, c in ipairs(ACC_CHOICES) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = c[2]
-            info.checked = (Vigil.db.accent == c[1])
+            info.checked = (Vantage.db.accent == c[1])
             info.func = function()
-                Vigil.db.accent = c[1]
+                Vantage.db.accent = c[1]
                 UIDropDownMenu_SetText(accentDD, c[2])
                 refreshSkin() -- target outline re-tints; glow/label follow on next cue
             end
@@ -302,9 +302,9 @@ function M:OnEnable()
         for _, c in ipairs(HT_CHOICES) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = c[2]
-            info.checked = (Vigil.db.healthText == c[1])
+            info.checked = (Vantage.db.healthText == c[1])
             info.func = function()
-                Vigil.db.healthText = c[1]
+                Vantage.db.healthText = c[1]
                 UIDropDownMenu_SetText(healthTextDD, c[2])
                 refreshSkin()
             end
@@ -316,8 +316,8 @@ function M:OnEnable()
 
     y = header("Style", y)
     local FONT_CHOICES, SOUND_CHOICES = {}, {}
-    for _, f in ipairs(Vigil.fonts) do FONT_CHOICES[#FONT_CHOICES + 1] = { f.key, f.label } end
-    for _, s in ipairs(Vigil.sounds) do SOUND_CHOICES[#SOUND_CHOICES + 1] = { s.key, s.label } end
+    for _, f in ipairs(Vantage.fonts) do FONT_CHOICES[#FONT_CHOICES + 1] = { f.key, f.label } end
+    for _, s in ipairs(Vantage.sounds) do SOUND_CHOICES[#SOUND_CHOICES + 1] = { s.key, s.label } end
     dropdown(PAD, y, "font", "Font", FONT_CHOICES, 110, restyleAll)
     dropdown(COL2, y, "fontStyle", "Text style", {
         { "outline", "Outline" },
@@ -340,7 +340,7 @@ function M:OnEnable()
 
     y = header("Cast bars & interrupts", y)
     check(PAD, y, "showCastbar", "Enemy cast bars",
-        "Vigil's styled cast bar under each enemy plate. Replaces Blizzard's plate cast bar (which comes back if you turn this off).", refreshSkin)
+        "Vantage's styled cast bar under each enemy plate. Replaces Blizzard's plate cast bar (which comes back if you turn this off).", refreshSkin)
     check(COL2, y, "showCastTime", "Cast time remaining",
         "Seconds left on the cast, shown at the right end of the bar.")
     y = y - 24
@@ -351,12 +351,12 @@ function M:OnEnable()
     check(PAD, y, "showPadlock", "Padlock on uninterruptible",
         "Red bar + lock icon: hold your kick, this cast can't be stopped.")
     check(COL2, y, "cueUnknown", "Cue unknown casts",
-        "Also treat casts Vigil has no intel on as kickable. Handy while questing; may cause false calls.")
+        "Also treat casts Vantage has no intel on as kickable. Handy while questing; may cause false calls.")
     y = y - 24
     check(PAD, y, "pvp", "PvP: cue enemy player casts",
         "Against enemy players no database is needed — the cue fires whenever your interrupt (hard or soft) is ready.")
-    check(COL2, y, "parse", "Log decisions (Vigil Parse)",
-        "Records every cast decision + outcome: interrupts landed, casts let through while your kick was ready, reaction time. /vigil parse for a summary, /vigil export to copy the data out.")
+    check(COL2, y, "parse", "Log decisions (Vantage Parse)",
+        "Records every cast decision + outcome: interrupts landed, casts let through while your kick was ready, reaction time. /vantage parse for a summary, /vantage export to copy the data out.")
     y = y - 24
     check(PAD, y, "rangeCheck", "Range-aware cue",
         "Only shout when the target is actually within your stop's range. Ready-but-too-far casts stay gold without the popup, and the cue fires the moment you close in.")
@@ -366,10 +366,12 @@ function M:OnEnable()
     check(PAD, y, "cueHidesText", "Cue clears the bar text",
         "While the INTERRUPT/FEAR/STUN label is centered on the health bar, that plate's level and HP text step aside so the call stands alone. Applies only to the \"Plate center\" label position; everything returns the moment the cue clears.")
     check(COL2, y, "briefing", "Dungeon briefing",
-        "On entering a dungeon or raid Vigil has intel on, print the kick sheet: what to kick on sight, what to never waste a kick on. /vigil brief reprints it with the reasons.")
+        "On entering a dungeon or raid Vantage has intel on, print the kick sheet: what to kick on sight, what to never waste a kick on. /vantage brief reprints it with the reasons.")
     y = y - 24
     check(PAD, y, "partyKicks", "Party kick watch",
         "Watches the combat log for groupmates' interrupts and infers their cooldowns — nobody else needs the addon. When a kickable cast is up and YOUR stop is down, the cue quietly names a groupmate whose interrupt should be ready. No glow, no sound: their moment, not your shout.")
+    check(COL2, y, "learn", "Learn kicks from combat",
+        "Vantage watches every cast that gets interrupted — yours or a groupmate's — and banks it as kickable, since you can't interrupt an uninterruptible cast. Casts the curated pack has never heard of become real kick cues the next time they appear. Curated \"do not kick\" markers are never overridden. /vantage learned lists what it has picked up.")
     y = y - 28
 
     y = header("Your auras", y)
@@ -394,7 +396,7 @@ function M:OnEnable()
     check(PAD, y, "threatAmber", "Amber \"closing in\" warning",
         "Estimates threat from your group's damage in the combat log (the client's threat API is broken, so this is honest math, not magic): amber = your damage is ~90% of the way to pulling the holder's mob. Tank mode: amber = a DPS is closing in on losing you the mob. Heals and taunts are invisible to it — expect late, never spammy, warnings.")
     y = y - 24
-    check(PAD, y, "enabled", "Enable Vigil")
+    check(PAD, y, "enabled", "Enable Vantage")
     check(COL2, y, "debug", "Debug messages",
         "Prints the per-cast decision (cast -> tier) to chat.")
     y = y - 24
@@ -419,11 +421,11 @@ function M:OnEnable()
         for _, c in ipairs(LP_CHOICES) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = c[2]
-            info.checked = (Vigil.db.labelPos == c[1])
+            info.checked = (Vantage.db.labelPos == c[1])
             info.func = function()
-                Vigil.db.labelPos = c[1]
+                Vantage.db.labelPos = c[1]
                 UIDropDownMenu_SetText(labelDD, c[2])
-                if Vigil.Nameplates then Vigil.Nameplates:ReanchorKicks() end
+                if Vantage.Nameplates then Vantage.Nameplates:ReanchorKicks() end
             end
             UIDropDownMenu_AddButton(info)
         end
@@ -432,28 +434,28 @@ function M:OnEnable()
     -- ---- refresh / reset ----------------------------------------------------
     local function refresh()
         for _, cb in ipairs(checks) do
-            cb:SetChecked(Vigil.db[cb.key])
+            cb:SetChecked(Vantage.db[cb.key])
         end
         for _, s in ipairs(sliders) do
-            local v = Vigil.db[s.key] or select(1, s:GetMinMaxValues())
+            local v = Vantage.db[s.key] or select(1, s:GetMinMaxValues())
             s:SetValue(v)
             s.updateText(v)
         end
-        UIDropDownMenu_SetText(healthTextDD, htLabel(Vigil.db.healthText))
-        UIDropDownMenu_SetText(labelDD, lpText(Vigil.db.labelPos))
-        UIDropDownMenu_SetText(accentDD, accText(Vigil.db.accent))
+        UIDropDownMenu_SetText(healthTextDD, htLabel(Vantage.db.healthText))
+        UIDropDownMenu_SetText(labelDD, lpText(Vantage.db.labelPos))
+        UIDropDownMenu_SetText(accentDD, accText(Vantage.db.accent))
         for _, dd in ipairs(drops) do
-            UIDropDownMenu_SetText(dd, dd.textFor(Vigil.db[dd.key]))
+            UIDropDownMenu_SetText(dd, dd.textFor(Vantage.db[dd.key]))
         end
     end
 
     reset:SetScript("OnClick", function()
-        for k, v in pairs(Vigil.defaults) do Vigil.db[k] = v end
+        for k, v in pairs(Vantage.defaults) do Vantage.db[k] = v end
         refresh()
         restyleAll()
         applyScale()
-        if Vigil.Nameplates then Vigil.Nameplates:ReanchorKicks() end
-        Vigil:Print("Settings reset to defaults.")
+        if Vantage.Nameplates then Vantage.Nameplates:ReanchorKicks() end
+        Vantage:Print("Settings reset to defaults.")
     end)
 
     panel:SetScript("OnShow", refresh)
@@ -462,24 +464,30 @@ function M:OnEnable()
 
     -- Register with whichever options API this client has.
     if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
-        local cat = Settings.RegisterCanvasLayoutCategory(panel, "Vigil")
-        cat.ID = "Vigil"
+        local cat = Settings.RegisterCanvasLayoutCategory(panel, "Vantage")
         Settings.RegisterAddOnCategory(cat)
         M.category = cat
-        function Vigil:OpenOptions() Settings.OpenToCategory(cat.ID) end
+        -- 2.5.6's retail-style Settings API: OpenToCategory forwards its arg to
+        -- C_SettingsUtil.OpenSettingsPanel, which requires the NUMERIC category
+        -- id (a string like "Vantage" throws "outside expected range"). Use the
+        -- category's GetID(); fall back to the object/field for older builds.
+        function Vantage:OpenOptions()
+            local id = (cat.GetID and cat:GetID()) or cat.ID or cat
+            Settings.OpenToCategory(id)
+        end
     elseif InterfaceOptions_AddCategory then
         InterfaceOptions_AddCategory(panel)
-        function Vigil:OpenOptions()
+        function Vantage:OpenOptions()
             -- called twice: long-standing Blizzard quirk where the first call
             -- only scrolls to the category and the second actually opens it.
             InterfaceOptionsFrame_OpenToCategory(panel)
             InterfaceOptionsFrame_OpenToCategory(panel)
         end
     else
-        function Vigil:OpenOptions() Vigil:ShowHelp() end
+        function Vantage:OpenOptions() Vantage:ShowHelp() end
     end
 
     refresh()
 end
 
-Vigil.Options = M
+Vantage.Options = M
