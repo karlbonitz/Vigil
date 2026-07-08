@@ -7,10 +7,10 @@
 ## X-Category: Combat
 ## X-Website: https://github.com/karlbonitz/Vantage
 ## X-License: MIT
-# Uncomment + fill these once the CurseForge / Wago project pages exist, so the
-# packager Action can upload to them (with CF_API_KEY / WAGO_API_TOKEN secrets set):
-# ## X-Curse-Project-ID: 000000
-# ## X-Wago-ID: xxxxxxxx
+# Publish targets for the packager Action (uploads on a v* tag, when the
+# CF_API_KEY / WAGO_API_TOKEN repo secrets are set):
+## X-Curse-Project-ID: 1602039
+## X-Wago-ID: qKQm2EKx
 
 # --- Core (load first; defines the namespace, event bus, DB, slash commands) ---
 Core\Util.lua
