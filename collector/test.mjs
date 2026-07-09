@@ -139,10 +139,25 @@ const submit = (uuid, spells) => ({
   eq(stats.contributors, 4, "stats: 4 distinct contributors (profiles)");
   eq(stats.submissions, 4, "stats: 4 submissions");
 
+  eq(stats.withEvidence, 3, "stats: all 3 candidates carry npc/interrupt evidence");
+  ok(stats.firstSubmission != null, "stats: firstSubmission timestamp present");
+
   const all = db.allCandidates();
   eq(all.length, 3, "allCandidates returns every row");
   ok(all[0].status === "verified", "allCandidates orders verified first");
   ok(all.some((c) => c.spell_id === 700 && c.confirmers === 3), "700 verified with 3 confirmers");
+
+  const subs = db.recentSubmissions(100);
+  eq(subs.length, 4, "recentSubmissions returns every submission");
+  eq(subs[0].uuid.slice(0, 4), "dddd", "recentSubmissions is newest-first");
+
+  const vers = db.versionBreakdown();
+  eq(vers.length, 1, "one addon version seen");
+  eq(vers[0].submissions, 4, "versionBreakdown counts submissions");
+  eq(vers[0].installs, 4, "versionBreakdown counts distinct installs");
+
+  const act = db.dailyActivity(0);
+  ok(act.length >= 1 && act[0].submissions === 4, "dailyActivity buckets submissions by day");
   db.close();
 }
 

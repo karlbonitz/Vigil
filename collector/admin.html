@@ -30,93 +30,71 @@
   body {
     background: var(--bg); color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 15px; line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+    font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased;
   }
   a { color: var(--gold); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .wrap { max-width: 1140px; margin: 0 auto; padding: 22px 20px 64px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 20px 72px; }
 
-  /* ---- header ---- */
   header {
     display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
     border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 22px;
   }
   .brand { font-family: var(--serif); font-size: 25px; letter-spacing: .04em; }
   .brand b { color: var(--gold); font-weight: 600; }
-  .brand .tag {
-    font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
-    color: var(--faint); text-transform: uppercase; margin-left: 2px;
-  }
+  .brand .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--faint); text-transform: uppercase; margin-left: 2px; }
   .spacer { flex: 1 1 auto; }
   .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-  button.btn {
-    font: inherit; font-size: 13px; cursor: pointer;
-    background: var(--panel-2); color: var(--ink);
-    border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px;
-  }
+  button.btn { font: inherit; font-size: 13px; cursor: pointer; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; }
   button.btn:hover { border-color: var(--faint); }
-  button.btn:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  button.btn:focus-visible, input:focus-visible, th.sortable:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .linkbtn { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px; padding: 0; }
   .linkbtn:hover { color: var(--ink); text-decoration: underline; }
 
-  /* ---- tiles ---- */
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 26px; }
-  .tile {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-    padding: 15px 16px; display: flex; flex-direction: column; gap: 3px;
-  }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
   .tile .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); }
-  .tile .v { font-family: var(--mono); font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .tile .sub { font-size: 11.5px; color: var(--faint); }
+  .tile .v { font-family: var(--mono); font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .tile .sub { font-size: 11px; color: var(--faint); }
   .tile.hero { grid-column: span 2; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border-color: #2a3a37; }
-  .tile.hero .v { font-size: 46px; }
-  .tile.hero.live { border-color: var(--good); }
-  .tile.hero.live .v { color: var(--good); }
+  .tile.hero .v { font-size: 44px; }
+  .tile.hero.live { border-color: var(--good); } .tile.hero.live .v { color: var(--good); }
   .tile.hero.idle .v { color: var(--faint); }
-  .v.good { color: var(--good); } .v.neutral { color: var(--neutral); } .v.crit { color: var(--crit); }
+  .v.good { color: var(--good); } .v.neutral { color: var(--neutral); } .v.crit { color: var(--crit); } .v.gold { color: var(--gold); }
 
-  /* ---- panels ---- */
-  section { margin-bottom: 26px; }
+  section { margin-bottom: 22px; }
+  .grid2 { display: grid; grid-template-columns: 1fr; gap: 22px; }
+  @media (min-width: 860px) { .grid2 { grid-template-columns: 3fr 2fr; } }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  .phead {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    padding: 13px 16px; border-bottom: 1px solid var(--line);
-  }
+  .phead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 13px 16px; border-bottom: 1px solid var(--line); }
   .phead h2 { font-family: var(--serif); font-weight: 600; font-size: 17px; margin: 0; letter-spacing: .01em; }
   .phead .count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-  .hint { font-size: 12.5px; color: var(--muted); padding: 0; margin: 0; }
+  .hint { font-size: 12.5px; color: var(--muted); }
 
-  /* ---- controls ---- */
   .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .seg button { font: inherit; font-size: 12.5px; cursor: pointer; background: transparent; color: var(--muted); border: none; padding: 5px 11px; }
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button.on { background: var(--panel-2); color: var(--ink); }
-  input.search, input.num {
-    font: inherit; font-size: 13px; background: var(--bg); color: var(--ink);
-    border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px;
-  }
+  input.search, input.num { font: inherit; font-size: 13px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; }
   input.num { width: 58px; text-align: center; font-family: var(--mono); }
   label.inline { font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 
-  /* ---- tables ---- */
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th {
-    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--panel);
-  }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--panel); }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  th .arrow { color: var(--gold); font-size: 9px; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover td { background: var(--panel-2); }
   td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
   td.spell { white-space: normal; }
-  td.wrap-cell { white-space: normal; color: var(--muted); font-size: 12.5px; max-width: 240px; }
+  td.wrap-cell { white-space: normal; color: var(--muted); font-size: 12.5px; max-width: 220px; }
   .id { font-family: var(--mono); color: var(--faint); font-size: 12px; }
   .empty { padding: 26px 16px; color: var(--faint); font-size: 13.5px; text-align: center; }
 
-  /* ---- chips ---- */
   .chip { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid; text-transform: lowercase; }
   .chip.verified { color: var(--good); border-color: var(--good); background: var(--good-dim); }
   .chip.pending  { color: var(--neutral); border-color: var(--neutral); background: var(--neutral-dim); }
@@ -124,7 +102,21 @@
   .chip.promoted { color: var(--gold); border-color: var(--gold); background: #322b0d; }
   .chip.ready { color: var(--good); border-color: var(--good); background: var(--good-dim); margin-left: 8px; }
 
-  /* ---- token gate ---- */
+  /* activity chart */
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 88px; padding: 14px 16px 8px; overflow-x: auto; }
+  .bar { flex: 1 0 8px; min-width: 8px; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+  .bar i { display: block; background: var(--neutral); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .bar.hot i { background: var(--good); }
+  .chart-x { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--faint); padding: 0 16px 12px; }
+
+  /* version bars */
+  .vlist { padding: 6px 16px 14px; display: flex; flex-direction: column; gap: 9px; }
+  .vrow { display: grid; grid-template-columns: 90px 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+  .vrow .vname { font-family: var(--mono); color: var(--ink); }
+  .vrow .vtrack { height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; }
+  .vrow .vtrack i { display: block; height: 100%; background: var(--gold); border-radius: 999px; }
+  .vrow .vnum { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+
   .gate { position: fixed; inset: 0; background: rgba(8,10,13,.88); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
   .gate.show { display: flex; }
   .gate .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 26px; width: 100%; max-width: 380px; }
@@ -154,16 +146,22 @@
 
   <section>
     <div class="panel">
+      <div class="phead"><h2>Submission activity</h2><span class="count" id="act-count"></span><span class="spacer"></span><span class="hint">last 30 days</span></div>
+      <div class="chart" id="chart"></div>
+      <div class="chart-x" id="chart-x"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
       <div class="phead">
         <h2>Ready to promote</h2>
         <span class="count" id="ready-count"></span>
         <span class="spacer"></span>
-        <label class="inline">min confirmers
-          <input class="num" id="min" type="number" min="1" max="50" value="3">
-        </label>
+        <label class="inline">min confirmers <input class="num" id="min" type="number" min="1" max="50" value="3"></label>
         <a class="btn" id="promote-link" target="_blank" rel="noopener">Run Promote action ↗</a>
       </div>
-      <p class="hint" style="padding:10px 16px 0">Verified spells that clear the confirmer bar. Running the Promote action regenerates the pack from this set — it's idempotent, so entries you already shipped just produce no PR change.</p>
+      <p class="hint" style="padding:10px 16px 0">Verified spells that clear the confirmer bar. Running Promote regenerates the pack from this set — idempotent, so already-shipped entries produce no PR change.</p>
       <div class="scroll"><table id="ready-tbl"></table></div>
     </div>
   </section>
@@ -188,6 +186,21 @@
     </div>
   </section>
 
+  <div class="grid2">
+    <section style="margin:0">
+      <div class="panel">
+        <div class="phead"><h2>Recent submissions</h2><span class="count" id="sub-count"></span></div>
+        <div class="scroll"><table id="sub-tbl"></table></div>
+      </div>
+    </section>
+    <section style="margin:0">
+      <div class="panel">
+        <div class="phead"><h2>By addon version</h2></div>
+        <div class="vlist" id="vlist"></div>
+      </div>
+    </section>
+  </div>
+
   <footer id="foot"></footer>
 </div>
 
@@ -206,7 +219,8 @@
   "use strict";
   var KEY = "vantage_admin_token";
   var PROMOTE_URL = "https://github.com/karlbonitz/Vantage/actions/workflows/promote.yml";
-  var DATA = null, MIN = 3, STATUS = "all", Q = "";
+  var DATA = null, MIN = 3, STATUS = "all", Q = "", SORT = { key: null, dir: "desc" };
+  var NUMERIC = { spell_id: 1, confirmers: 1, reports: 1, first_seen: 1, last_seen: 1 };
 
   var $ = function (id) { return document.getElementById(id); };
   function token() { return localStorage.getItem(KEY) || ""; }
@@ -214,6 +228,7 @@
   function arr(j) { try { var a = JSON.parse(j || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   function joinArr(j) { var a = arr(j); return a.length ? a.map(esc).join(", ") : "—"; }
   function fmtTime(ts) { if (!ts) return "—"; try { return new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return "—"; } }
+  function fmtDate(ts) { if (!ts) return "—"; try { return new Date(ts * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" }); } catch (e) { return "—"; } }
 
   function showGate(msg) { $("app").hidden = true; $("gate").classList.add("show"); $("gate-err").textContent = msg || ""; $("token-in").focus(); }
   function hideGate() { $("gate").classList.remove("show"); $("app").hidden = false; }
@@ -227,9 +242,7 @@
       if (res.status === 401) { localStorage.removeItem(KEY); showGate("That token was rejected."); return; }
       if (!res.ok) { banner("Collector returned " + res.status + "."); return; }
       DATA = await res.json();
-      banner("");
-      hideGate();
-      render();
+      banner(""); hideGate(); render();
       $("updated").textContent = "updated " + new Date().toLocaleTimeString();
     } catch (e) { hideGate(); banner("Couldn't reach the collector. Check it's up and try Refresh."); }
   }
@@ -238,78 +251,145 @@
     return '<div class="tile"><span class="k">' + esc(k) + '</span><span class="v ' + (cls || "") + '">' + esc(v) + '</span>' + (sub ? '<span class="sub">' + esc(sub) + '</span>' : "") + '</div>';
   }
 
-  function render() {
-    if (!DATA) return;
-    var s = DATA.stats || {}, bs = s.byStatus || {};
-    var cands = DATA.candidates || [];
-    var ready = cands.filter(function (c) { return c.status === "verified" && (c.confirmers || 0) >= MIN; });
-
-    // tiles — ready-to-promote is the hero
+  function renderTiles(s, ready) {
+    var bs = s.byStatus || {};
     var live = ready.length > 0;
-    var html = ""
+    $("tiles").innerHTML = ""
       + '<div class="tile hero ' + (live ? "live" : "idle") + '"><span class="k">Ready to promote</span><span class="v">' + ready.length + '</span><span class="sub">verified &amp; ≥ ' + MIN + ' confirmers</span></div>'
       + tile("Verified", bs.verified || 0, "good")
       + tile("Pending", bs.pending || 0, "neutral")
       + tile("Rejected", bs.rejected || 0, "crit")
+      + tile("Promoted", bs.promoted || 0, "gold")
       + tile("Contributors", s.contributors || 0, "", "distinct installs")
-      + tile("Submissions", s.submissions || 0, "", "last " + fmtTime(s.lastSubmission));
-    $("tiles").innerHTML = html;
+      + tile("Submissions", s.submissions || 0, "", "since " + fmtDate(s.firstSubmission))
+      + tile("With evidence", s.withEvidence || 0, "", "of " + (s.candidates || 0) + " candidates");
+  }
 
-    // ready table
+  function renderChart(activity) {
+    var c = $("chart"), xr = $("chart-x");
+    if (!activity || !activity.length) { c.innerHTML = '<div class="empty" style="width:100%">No submissions in the last 30 days.</div>'; xr.innerHTML = ""; $("act-count").textContent = ""; return; }
+    var max = activity.reduce(function (m, d) { return Math.max(m, d.submissions); }, 1);
+    var total = activity.reduce(function (t, d) { return t + d.submissions; }, 0);
+    $("act-count").textContent = total + " submissions / " + activity.length + " active day" + (activity.length === 1 ? "" : "s");
+    c.innerHTML = activity.map(function (d) {
+      var h = Math.round((d.submissions / max) * 100);
+      return '<div class="bar ' + (d.submissions === max ? "hot" : "") + '" title="' + esc(d.day) + ": " + d.submissions + " submissions, " + d.installs + ' installs"><i style="height:' + h + '%"></i></div>';
+    }).join("");
+    xr.innerHTML = '<span>' + esc(activity[0].day) + '</span>' + (activity.length > 1 ? '<span>' + esc(activity[activity.length - 1].day) + '</span>' : "");
+  }
+
+  function renderReady(ready) {
     $("ready-count").textContent = ready.length + (ready.length === 1 ? " spell" : " spells");
     var rt = $("ready-tbl");
-    if (!ready.length) {
-      rt.innerHTML = '<tbody><tr><td class="empty">Nothing over the bar yet — a spell needs a seed match and ≥ ' + MIN + ' distinct confirmers.</td></tr></tbody>';
-    } else {
-      rt.innerHTML = "<thead><tr><th>ID</th><th>Spell</th><th>Confirmers</th><th>Reports</th><th>Zones</th></tr></thead><tbody>"
-        + ready.map(function (c) {
-          return "<tr><td class='id'>" + c.spell_id + "</td><td class='spell'>" + esc(c.name) + "</td><td class='num'>" + c.confirmers + "</td><td class='num'>" + c.reports + "</td><td class='wrap-cell'>" + joinArr(c.zones) + "</td></tr>";
-        }).join("") + "</tbody>";
-    }
+    if (!ready.length) { rt.innerHTML = '<tbody><tr><td class="empty">Nothing over the bar yet — a spell needs a seed match and ≥ ' + MIN + ' distinct confirmers.</td></tr></tbody>'; return; }
+    rt.innerHTML = "<thead><tr><th>ID</th><th>Spell</th><th>Confirmers</th><th>Reports</th><th>Zones</th><th>NPCs</th></tr></thead><tbody>"
+      + ready.map(function (c) {
+        return "<tr><td class='id'>" + c.spell_id + "</td><td class='spell'>" + esc(c.name) + "</td><td class='num'>" + c.confirmers + "</td><td class='num'>" + c.reports + "</td><td class='wrap-cell'>" + joinArr(c.zones) + "</td><td class='wrap-cell'>" + joinArr(c.npcs) + "</td></tr>";
+      }).join("") + "</tbody>";
+  }
 
-    // all table (filtered)
+  function sortRows(rows) {
+    if (!SORT.key) return rows;
+    var k = SORT.key, num = NUMERIC[k], dir = SORT.dir === "asc" ? 1 : -1;
+    return rows.slice().sort(function (a, b) {
+      var x = a[k], y = b[k];
+      if (num) { x = +x || 0; y = +y || 0; return (x - y) * dir; }
+      x = String(x || "").toLowerCase(); y = String(y || "").toLowerCase();
+      return (x < y ? -1 : x > y ? 1 : 0) * dir;
+    });
+  }
+
+  function th(key, label, extra) {
+    var on = SORT.key === key;
+    var arrow = on ? '<span class="arrow">' + (SORT.dir === "asc" ? "▲" : "▼") + "</span>" : "";
+    return '<th class="sortable" tabindex="0" data-key="' + key + '"' + (extra || "") + '>' + label + " " + arrow + "</th>";
+  }
+
+  function renderAll(cands) {
     var rows = cands.filter(function (c) {
       if (STATUS !== "all" && c.status !== STATUS) return false;
       if (Q) { var q = Q.toLowerCase(); if (String(c.spell_id).indexOf(q) === -1 && (c.name || "").toLowerCase().indexOf(q) === -1) return false; }
       return true;
     });
+    rows = sortRows(rows);
     $("all-count").textContent = rows.length + " of " + cands.length;
     var at = $("all-tbl");
-    if (!rows.length) {
-      at.innerHTML = '<tbody><tr><td class="empty">No candidates match.</td></tr></tbody>';
-    } else {
-      at.innerHTML = "<thead><tr><th>ID</th><th>Spell</th><th>Status</th><th>Confirmers</th><th>Reports</th><th>Zones</th><th>Reason</th><th>Last seen</th></tr></thead><tbody>"
-        + rows.map(function (c) {
-          var isReady = c.status === "verified" && (c.confirmers || 0) >= MIN;
-          return "<tr><td class='id'>" + c.spell_id + "</td>"
-            + "<td class='spell'>" + esc(c.name) + (isReady ? "<span class='chip ready'>ready</span>" : "") + "</td>"
-            + "<td><span class='chip " + esc(c.status) + "'>" + esc(c.status) + "</span></td>"
-            + "<td class='num'>" + (c.confirmers || 0) + "</td>"
-            + "<td class='num'>" + (c.reports || 0) + "</td>"
-            + "<td class='wrap-cell'>" + joinArr(c.zones) + "</td>"
-            + "<td class='wrap-cell'>" + esc(c.reason || "—") + "</td>"
-            + "<td class='id'>" + fmtTime(c.last_seen) + "</td></tr>";
-        }).join("") + "</tbody>";
-    }
-
-    $("foot").innerHTML = "Vantage community-intel collector · " + esc(location.host)
-      + " · " + (s.candidates || 0) + " candidates, " + (s.reports || 0) + " total reports."
-      + " Token is stored only in this browser.";
+    if (!rows.length) { at.innerHTML = '<tbody><tr><td class="empty">No candidates match.</td></tr></tbody>'; return; }
+    var head = "<thead><tr>" + th("spell_id", "ID") + th("name", "Spell") + th("status", "Status")
+      + th("confirmers", "Confirmers") + th("reports", "Reports")
+      + "<th>Zones</th><th>NPCs</th><th>Interrupt evidence</th>" + th("reason", "Reason")
+      + th("first_seen", "First seen") + th("last_seen", "Last seen") + "</tr></thead>";
+    at.innerHTML = head + "<tbody>" + rows.map(function (c) {
+      var isReady = c.status === "verified" && (c.confirmers || 0) >= MIN;
+      return "<tr><td class='id'>" + c.spell_id + "</td>"
+        + "<td class='spell'>" + esc(c.name) + (isReady ? "<span class='chip ready'>ready</span>" : "") + "</td>"
+        + "<td><span class='chip " + esc(c.status) + "'>" + esc(c.status) + "</span></td>"
+        + "<td class='num'>" + (c.confirmers || 0) + "</td><td class='num'>" + (c.reports || 0) + "</td>"
+        + "<td class='wrap-cell'>" + joinArr(c.zones) + "</td><td class='wrap-cell'>" + joinArr(c.npcs) + "</td>"
+        + "<td class='wrap-cell'>" + joinArr(c.interrupts) + "</td>"
+        + "<td class='wrap-cell'>" + esc(c.reason || "—") + "</td>"
+        + "<td class='id'>" + fmtTime(c.first_seen) + "</td><td class='id'>" + fmtTime(c.last_seen) + "</td></tr>";
+    }).join("") + "</tbody>";
+    Array.prototype.forEach.call(at.querySelectorAll("th.sortable"), function (h) {
+      h.addEventListener("click", function () { sortClick(h.getAttribute("data-key")); });
+      h.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortClick(h.getAttribute("data-key")); } });
+    });
   }
 
-  // wire up
+  function sortClick(key) {
+    if (SORT.key === key) SORT.dir = SORT.dir === "asc" ? "desc" : "asc";
+    else { SORT.key = key; SORT.dir = NUMERIC[key] ? "desc" : "asc"; }
+    renderAll(DATA.candidates || []);
+  }
+
+  function renderSubs(subs) {
+    $("sub-count").textContent = (subs ? subs.length : 0) + " shown";
+    var t = $("sub-tbl");
+    if (!subs || !subs.length) { t.innerHTML = '<tbody><tr><td class="empty">No submissions yet.</td></tr></tbody>'; return; }
+    t.innerHTML = "<thead><tr><th>When</th><th>Install</th><th>Ver</th><th>Spells</th><th>Src</th></tr></thead><tbody>"
+      + subs.map(function (s) {
+        var u = (s.uuid || "?").slice(0, 8), ip = (s.ip_hash || "").slice(0, 6);
+        return "<tr><td class='id'>" + fmtTime(s.at) + "</td><td class='id' title='" + esc(s.uuid) + "'>" + esc(u) + "…</td><td class='id'>" + esc(s.version || "—") + "</td><td class='num'>" + (s.spells || 0) + "</td><td class='id'>" + (ip ? esc(ip) + "…" : "—") + "</td></tr>";
+      }).join("") + "</tbody>";
+  }
+
+  function renderVersions(versions) {
+    var el = $("vlist");
+    if (!versions || !versions.length) { el.innerHTML = '<div class="empty">No submissions yet.</div>'; return; }
+    var max = versions.reduce(function (m, v) { return Math.max(m, v.submissions); }, 1);
+    el.innerHTML = versions.map(function (v) {
+      var w = Math.round((v.submissions / max) * 100);
+      return '<div class="vrow"><span class="vname">' + esc(v.version) + '</span><span class="vtrack"><i style="width:' + w + '%"></i></span><span class="vnum">' + v.submissions + " subs · " + v.installs + " inst</span></div>";
+    }).join("");
+  }
+
+  function render() {
+    if (!DATA) return;
+    var s = DATA.stats || {}, cands = DATA.candidates || [];
+    var ready = cands.filter(function (c) { return c.status === "verified" && (c.confirmers || 0) >= MIN; });
+    renderTiles(s, ready);
+    renderChart(DATA.activity);
+    renderReady(ready);
+    renderAll(cands);
+    renderSubs(DATA.recentSubmissions);
+    renderVersions(DATA.versions);
+    $("foot").innerHTML = "Vantage community-intel collector · " + esc(location.host)
+      + " · " + (s.candidates || 0) + " candidates, " + (s.reports || 0) + " total reports, " + (s.contributors || 0) + " contributors."
+      + " Token stored only in this browser.";
+  }
+
   $("promote-link").href = PROMOTE_URL;
   $("refresh").addEventListener("click", load);
   $("signout").addEventListener("click", function () { localStorage.removeItem(KEY); DATA = null; showGate(); });
   $("unlock").addEventListener("click", function () { var v = $("token-in").value.trim(); if (!v) { $("gate-err").textContent = "Enter a token."; return; } localStorage.setItem(KEY, v); $("token-in").value = ""; load(); });
   $("token-in").addEventListener("keydown", function (e) { if (e.key === "Enter") $("unlock").click(); });
   $("min").addEventListener("input", function (e) { var v = parseInt(e.target.value, 10); MIN = (v > 0 ? v : 3); render(); });
-  $("search").addEventListener("input", function (e) { Q = e.target.value.trim(); render(); });
+  $("search").addEventListener("input", function (e) { Q = e.target.value.trim(); renderAll(DATA ? DATA.candidates || [] : []); });
   Array.prototype.forEach.call(document.querySelectorAll("#statusfilter button"), function (b) {
     b.addEventListener("click", function () {
       STATUS = b.getAttribute("data-s");
       Array.prototype.forEach.call(document.querySelectorAll("#statusfilter button"), function (x) { x.classList.toggle("on", x === b); });
-      render();
+      renderAll(DATA ? DATA.candidates || [] : []);
     });
   });
 

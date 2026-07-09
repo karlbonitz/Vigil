@@ -55,8 +55,21 @@ export function openDb(path = ":memory:") {
     ),
     statusCounts: db.prepare(`SELECT status, COUNT(*) AS c FROM candidate GROUP BY status`),
     candTotals: db.prepare(`SELECT COUNT(*) AS c, COALESCE(SUM(reports), 0) AS r FROM candidate`),
+    evidenceCount: db.prepare(`SELECT COUNT(*) AS c FROM candidate WHERE npcs != '[]' OR interrupts != '[]'`),
     subStats: db.prepare(
-      `SELECT COUNT(*) AS submissions, COUNT(DISTINCT uuid) AS contributors, MAX(at) AS last FROM submission`
+      `SELECT COUNT(*) AS submissions, COUNT(DISTINCT uuid) AS contributors,
+              MIN(at) AS first, MAX(at) AS last FROM submission`
+    ),
+    recentSub: db.prepare(
+      `SELECT uuid, version, spells, at, ip_hash FROM submission ORDER BY at DESC, id DESC LIMIT ?`
+    ),
+    versionBreak: db.prepare(
+      `SELECT COALESCE(NULLIF(version, ''), '—') AS version, COUNT(*) AS submissions,
+              COUNT(DISTINCT uuid) AS installs FROM submission GROUP BY version ORDER BY submissions DESC`
+    ),
+    dailyAct: db.prepare(
+      `SELECT strftime('%Y-%m-%d', at, 'unixepoch') AS day, COUNT(*) AS submissions,
+              COUNT(DISTINCT uuid) AS installs FROM submission WHERE at >= ? GROUP BY day ORDER BY day`
     ),
   };
 
@@ -89,9 +102,14 @@ export function openDb(path = ":memory:") {
       const s = st.subStats.get();
       return {
         candidates: t.c, reports: t.r, byStatus,
-        contributors: s.contributors, submissions: s.submissions, lastSubmission: s.last,
+        withEvidence: st.evidenceCount.get().c,
+        contributors: s.contributors, submissions: s.submissions,
+        firstSubmission: s.first, lastSubmission: s.last,
       };
     },
+    recentSubmissions(limit = 100) { return st.recentSub.all(limit); },
+    versionBreakdown() { return st.versionBreak.all(); },
+    dailyActivity(sinceTs = 0) { return st.dailyAct.all(sinceTs); },
     close() { db.close(); },
   };
 }

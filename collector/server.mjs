@@ -122,7 +122,15 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/admin/data") {
       if (ADMIN_TOKEN && req.headers.authorization !== `Bearer ${ADMIN_TOKEN}`)
         return send(res, 401, { ok: false, error: "unauthorized" });
-      return send(res, 200, { ok: true, stats: db.stats(), candidates: db.allCandidates() });
+      const since = Math.floor(Date.now() / 1000) - 30 * 86400;
+      return send(res, 200, {
+        ok: true,
+        stats: db.stats(),
+        candidates: db.allCandidates(),
+        recentSubmissions: db.recentSubmissions(100),
+        versions: db.versionBreakdown(),
+        activity: db.dailyActivity(since),
+      });
     }
 
     // Push a freshly-built cross-check seed (from the GitHub Action / build-seed.mjs).
