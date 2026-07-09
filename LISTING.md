@@ -26,6 +26,12 @@ even your pet and stance — and lights up the plate the moment acting matters:
   an uninterruptible cast, so it's never wrong). Casts it had never heard of
   become real cues the next time they appear. All local, all automatic — no
   setup, no uploads — and it never overrides a verified "do not kick" marker.
+- 🌐 **A database everyone builds together.** What your game learns, you can
+  share back: `/vantage contribute` sends an anonymous, evidence-checked blob
+  (no character or realm — just the spell IDs you confirmed kickable and the
+  interrupt that stopped each one) to a community pool. Once several independent
+  players confirm a cast, it ships in the next update's shared pack — so coverage
+  grows for the whole community, and new players inherit it on day one.
 - 🛑 **Every class, not just kickers.** No hard interrupt? Vantage offers your
   real answer instead — `FEAR`, `STUN`, `SILENCE`, `SHACKLE` — and it checks
   target immunities first, so it never tells you to fear a fear-immune boss.
@@ -56,6 +62,7 @@ unreliable `notInterruptible` flag. From there it grows on its own: every cast
 Vantage watches get interrupted is added automatically, so coverage expands to
 whatever *you* run, including low-level and off-meta content.
 
-*Early release: the curated pack keeps growing, and Vantage fills the rest in as
-you play. Found a cast Vantage got wrong? Report it on GitHub:
+*Early release: the curated pack keeps growing, Vantage fills the rest in as you
+play, and `/vantage contribute` pools what you learn into the shared database.
+Found a cast Vantage got wrong? Report it on GitHub:
 https://github.com/karlbonitz/Vantage/issues*

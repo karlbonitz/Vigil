@@ -32,6 +32,16 @@ heard of become real cues the next time they appear, filling in low-level and
 off-meta content automatically — all local, no uploads, and it never overrides
 a verified "do not kick" marker. `/vantage learned` shows what it has picked up.
 
+And what one player learns, **everyone** inherits. `/vantage contribute` turns your
+self-taught kicks into a tiny, anonymous blob — no character, no realm, just the
+spell IDs you've confirmed kickable and the interrupt that stopped each one as
+proof — which you paste on the report page. A community collector pools these,
+cross-checks every submission against datamined spell data, and promotes a cast
+only once several *independent* players confirm it; then it ships in the next
+release, so the shared **Community Pack** keeps growing for the whole player base.
+Curated "do not kick" markers can never be overridden — the pool only ever *adds*
+verified kicks.
+
 And it looks the part: a full custom skin — smooth gradient health bars with a
 soft drop shadow, crisp 1px borders, class colors on players, level text, a
 slim mana bar on casters, health text, a gold outline + glow on your current
@@ -53,7 +63,8 @@ setup.
 
 ## Install
 
-CurseForge / Wago listings come with v1.0. Until then, from GitHub:
+Vantage is published on **CurseForge** and **Wago** — search "Vantage" in your
+addon manager. Or install straight from GitHub:
 
 1. Download the zip from [Releases](https://github.com/karlbonitz/Vantage/releases)
    — or `git clone https://github.com/karlbonitz/Vantage.git` — and put the
@@ -63,7 +74,7 @@ CurseForge / Wago listings come with v1.0. Until then, from GitHub:
 2. On the character screen, open **AddOns** and make sure Vantage is enabled.
    If it shows as "out of date", tick **Load out of date AddOns** (the interface
    number in `Vantage.toc` may lag a tiny patch — see *Versioning & releases* below).
-3. Log in. You should see: `Vantage v0.6.0 loaded.`
+3. Log in. You should see: `Vantage v0.11.0 loaded.`
 4. Make sure **enemy nameplates are on** (default keybind `V`, or hold the
    nameplate key).
 
@@ -91,6 +102,7 @@ CurseForge / Wago listings come with v1.0. Until then, from GitHub:
 | `/vantage unknown` | also cue casts Vantage has no intel on |
 | `/vantage learn` | toggle learning kicks from live combat (on by default) |
 | `/vantage learned` | list the interruptible casts Vantage has taught itself |
+| `/vantage contribute` | share your self-taught kicks with the community pool (anonymous) |
 | `/vantage pvp` | cue enemy **player** casts when your interrupt is ready (no DB needed) |
 | `/vantage range` | only shout when the target is within your stop's actual range |
 | `/vantage flash` | outcome flash as a flagged cast ends (KICKED / MISSED / WASTED) |
@@ -153,6 +165,7 @@ Vantage/
     KickableSpells.lua      seed Intel Pack: which casts to kick (+interruptible)
     Immunities.lua          per-NPC CC-immunity table + boss heuristic
     InterruptSpells.lua     your interrupts by class + "is my kick ready?"
+    CommunityPack.lua       crowdsourced kicks, regenerated from the pool at release
   Modules/
     Nameplates.lua          tracks plates, builds/recycles the overlay frames
     Skin.lua                custom health-bar skin (gradient/border/text/colors)
@@ -165,9 +178,11 @@ Vantage/
     Options.lua             native options panel (sections, sliders, reset)
     Parse.lua               Vantage Parse collector: decision rows + CLEU outcomes
     ParseExport.lua         /vantage export JSON copy-paste window
+    Contribute.lua          /vantage contribute — anonymous community-intel export
     Briefing.lua            the dungeon kick sheet, printed on zone-in
   docs/
     index.html              the Vantage Parse web report (served by GitHub Pages)
+  collector/                self-hosted community-intel backend (Node + SQLite + admin dashboard)
   .pkgmeta                  BigWigs packager config (what ships in the zip)
   .github/workflows/        tag-triggered package-and-release Action
   LISTING.md                paste-ready CurseForge/Wago description
@@ -190,6 +205,11 @@ no server ever sees. Nothing is uploaded anywhere.
 - **v0.3** — Ace3 adoption (AceConfig options GUI, AceSerializer+LibDeflate),
   shareable **Intel Pack** import/export strings + an "intel-only consumer" mode
   so Plater users can adopt the kick intelligence without switching nameplates.
+- **v0.11 — the community update** — ✅ crowdsourced kickable-spell database:
+  `/vantage contribute` feeds an anonymous, evidence-checked collector; once
+  several independent players confirm a cast it's promoted into a shared
+  **Community Pack** that ships with each release, so everyone's discoveries pool
+  together and new players inherit the lot on day one.
 - **Phase 2** — **Vantage Parse**: ✅ phase 1 shipped in v0.5.0 — decision/outcome
   collector (`/vantage parse`), JSON export (`/vantage export`), and the in-browser
   report page (`VantageParseWeb/`). Next: reaction-time percentiles, per-dungeon
