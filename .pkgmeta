@@ -20,6 +20,8 @@ ignore:
   - README.md
   - LISTING.md
   - docs
+  - collector   # server code for the community intel pool — never ships in the addon
+  - NEXT_STEPS.md
   - .github
 
 # externals:

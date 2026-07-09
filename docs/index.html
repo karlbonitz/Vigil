@@ -172,6 +172,16 @@
     <div id="importError" role="alert"></div>
   </div>
 
+  <div class="panel" id="contributePanel" style="display:none">
+    <p class="m" id="contributeText"></p>
+    <p class="privacy"><strong>Anonymous.</strong> Your character and realm are never sent — only the spell IDs you've confirmed kickable, plus the interrupt that stopped each one so it can be verified, not just trusted.</p>
+    <div class="importRow">
+      <button class="primary" id="contributeBtn">Contribute to the community pack</button>
+      <button class="ghost" id="contributeCancel">Not now</button>
+    </div>
+    <div id="contributeStatus" role="status"></div>
+  </div>
+
   <div class="panel" id="importMeta">
     <span class="m" id="importMetaText"></span>
     <button class="ghost" id="shareBtn" title="Packs this whole report into the link itself (after the #) — nothing is uploaded; whoever opens it decodes it in their own browser.">Copy share link</button>
@@ -364,6 +374,20 @@ function vpDecode(text) {
   return p;
 }
 
+/* Where the community-intel collector lives (Cloudflare Worker etc.). Leave blank
+   until you deploy one — the Contribute button then falls back to a GitHub issue.
+   See collector/README.md. */
+const COLLECTOR_URL = "";
+const REPO = "karlbonitz/Vantage";
+
+/* A /vantage contribute blob is a different shape from a parse export: detect it
+   so one paste box can route to the right flow. Returns the payload or null. */
+function vpIsIntel(text) {
+  let p;
+  try { p = JSON.parse(text.trim()); } catch (e) { return null; }
+  return (p && p.kind === "vantage-intel" && Array.isArray(p.spells)) ? p : null;
+}
+
 /* ===== sample data (deterministic, spans classes — not Priest-centric) ==== */
 function vpSample() {
   // spec: [spell, caster, zone, casts, windows, intMe(with rx spread), intOther, miss, lockedAll, wk]
@@ -431,7 +455,7 @@ function vpSample() {
   return { v: 1, exported: 1782882000, sessions: [s1, s2], roster };
 }
 
-if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpMedian, vpPercentile, vpCrew, vpSample };
+if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpMedian, vpPercentile, vpCrew, vpSample, vpIsIntel };
 </script>
 
 <script>
@@ -571,12 +595,68 @@ if (typeof module !== 'undefined') module.exports = { vpAggregate, vpDecode, vpM
     render();
   }
 
+  let pendingIntel = null;
   $('#analyzeBtn').addEventListener('click', () => {
+    // A /vantage contribute blob routes to the sharing flow, not the report.
+    const intel = vpIsIntel($('#pasteBox').value);
+    if (intel) {
+      pendingIntel = intel;
+      const n = intel.spells.length;
+      $('#contributeText').textContent =
+        `You've confirmed ${n} kickable cast${n === 1 ? '' : 's'} the curated pack didn't cover. Share them so every Vantage player's game gets smarter.`;
+      $('#importError').style.display = 'none';
+      $('#importPanel').style.display = 'none';
+      $('#contributePanel').style.display = 'block';
+      $('#contributeStatus').textContent = '';
+      return;
+    }
     try { load(vpDecode($('#pasteBox').value)); }
     catch (e) {
       const el = $('#importError');
       el.textContent = e.message;
       el.style.display = 'block';
+    }
+  });
+
+  function resetToPaste() {
+    $('#contributePanel').style.display = 'none';
+    $('#importPanel').style.display = 'block';
+    $('#pasteBox').value = '';
+    pendingIntel = null;
+  }
+  $('#contributeCancel').addEventListener('click', resetToPaste);
+  $('#contributeBtn').addEventListener('click', async () => {
+    if (!pendingIntel) return;
+    const status = $('#contributeStatus');
+    const blob = JSON.stringify(pendingIntel);
+
+    // No collector deployed yet? Fall back to a pre-filled GitHub issue (the
+    // $0 intake) when the blob is small enough to fit in a URL.
+    if (!COLLECTOR_URL) {
+      if (blob.length < 6000) {
+        const body = encodeURIComponent('Community intel submission (paste kept for the maintainer):\n\n```json\n' + blob + '\n```');
+        window.open(`https://github.com/${REPO}/issues/new?labels=intel&title=${encodeURIComponent('Community intel')}&body=${body}`, '_blank');
+        status.textContent = 'Opening a GitHub issue with your submission — just hit “Create”. Thanks!';
+      } else {
+        status.textContent = `That's a big batch. Open a new issue at github.com/${REPO}/issues labeled “intel” and paste your copied blob into it.`;
+      }
+      return;
+    }
+
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch(COLLECTOR_URL.replace(/\/$/, '') + '/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: blob,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      status.textContent =
+        `Thank you! ${data.accepted} confirmed` +
+        (data.pending ? `, ${data.pending} awaiting review` : '') +
+        (data.rejected ? `, ${data.rejected} already known or filtered` : '') +
+        '. Promoted spells ship in a future update.';
+    } catch (e) {
+      status.textContent = 'Could not reach the collector (' + e.message + '). Your data is safe — try again later.';
     }
   });
   $('#sampleBtn').addEventListener('click', () => { $('#pasteBox').value = JSON.stringify(vpSample()); load(vpSample()); });

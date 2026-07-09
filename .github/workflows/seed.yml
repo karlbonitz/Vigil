@@ -1,0 +1,69 @@
+name: Refresh cross-check seed
+
+# Rebuilds the community-collector's cross-check seed from wago.tools and pushes
+# it straight to the running collector over HTTPS (POST /seed, bearer-gated). No
+# commit, no redeploy — the collector reloads it on the next request. Survives
+# game patches on its own.
+#
+# Repo secrets (Settings -> Secrets and variables -> Actions):
+#   COLLECTOR_URL          e.g. https://intel.yourdomain.com
+#   COLLECTOR_ADMIN_TOKEN  the collector's ADMIN_TOKEN
+# Without them the seed still builds (and validates) but the upload step no-ops,
+# so this is safe to have enabled before you've deployed a collector.
+
+on:
+  schedule:
+    - cron: "0 20 * * 2"   # Tuesdays 20:00 UTC, after the weekly reset
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "wago.tools build to pin (blank = latest wow_anniversary)"
+        required: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # build-seed.mjs uses only Node built-ins + fetch, so no npm install here.
+      - name: Build seed from wago.tools
+        env:
+          BUILD: ${{ github.event.inputs.build }}
+        run: |
+          if [ -n "$BUILD" ]; then
+            node collector/build-seed.mjs --build "$BUILD"
+          else
+            node collector/build-seed.mjs
+          fi
+
+      # Guard against a broken upstream/format change silently shipping an empty seed.
+      - name: Validate
+        run: |
+          node -e '
+            const s = require("./collector/seed.json");
+            const n = s._spells || 0;
+            if (n < 1000) { console.error("seed too small:", n); process.exit(1); }
+            console.log("seed OK:", s._build, n + " spells,", (s._padlocks||0), "padlocks locked");
+          '
+
+      - name: Upload to collector
+        env:
+          COLLECTOR_URL: ${{ secrets.COLLECTOR_URL }}
+          TOKEN: ${{ secrets.COLLECTOR_ADMIN_TOKEN }}
+        run: |
+          if [ -z "$COLLECTOR_URL" ] || [ -z "$TOKEN" ]; then
+            echo "COLLECTOR_URL / COLLECTOR_ADMIN_TOKEN not set — built the seed but skipping upload."
+            echo "Set the secrets to enable automatic delivery."
+            exit 0
+          fi
+          echo "Uploading seed to $COLLECTOR_URL/seed …"
+          curl -fsS -X POST "${COLLECTOR_URL%/}/seed" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary @collector/seed.json
+          echo
+          echo "Done."

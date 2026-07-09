@@ -70,8 +70,13 @@ local function onCLEU()
         local destFlags = select(10, CombatLogGetCurrentEventInfo())
         local HOSTILE_OR_NEUTRAL = 0x60 -- REACTION_HOSTILE (0x40) | NEUTRAL (0x20)
         if destFlags and bit and bit.band(destFlags, HOSTILE_OR_NEUTRAL) ~= 0 then
+            -- src spell (12,13) = the interrupt that landed; extra (15,16) = the
+            -- cast it stopped; dstGUID = the caster. All three are the evidence
+            -- the community collector cross-checks before trusting a submission.
+            local byId, byName = select(12, CombatLogGetCurrentEventInfo())
             local exID, exName = select(15, CombatLogGetCurrentEventInfo())
-            Vantage.Learn:Note(exName, exID, GetRealZoneText and GetRealZoneText())
+            Vantage.Learn:Note(exName, exID, GetRealZoneText and GetRealZoneText(),
+                byName, byId, Vantage:NpcID(dstGUID))
         end
     end
 

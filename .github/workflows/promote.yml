@@ -1,0 +1,78 @@
+name: Promote community intel
+
+# The "ship it" half of the community pool, and its human gate. Manual-dispatch
+# only: it pulls the collector's VERIFIED candidates, regenerates
+# Data/CommunityPack.lua (curated padlocks refused, curated always wins), and
+# opens a PR for you to review. Nothing reaches players until you merge + release.
+#
+# Repo secrets required:
+#   COLLECTOR_URL          e.g. https://intel.yourdomain.com
+#   COLLECTOR_ADMIN_TOKEN  the collector's ADMIN_TOKEN (gates GET /candidates)
+
+on:
+  workflow_dispatch:
+    inputs:
+      min:
+        description: "Minimum distinct confirmers to promote a spell"
+        required: false
+        default: "3"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      COLLECTOR_URL: ${{ secrets.COLLECTOR_URL }}
+      VANTAGE_ADMIN_TOKEN: ${{ secrets.COLLECTOR_ADMIN_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      MIN: ${{ github.event.inputs.min }}
+      BRANCH: bot/community-pack
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Guard — collector configured?
+        run: |
+          if [ -z "$COLLECTOR_URL" ] || [ -z "$VANTAGE_ADMIN_TOKEN" ]; then
+            echo "::error::COLLECTOR_URL / COLLECTOR_ADMIN_TOKEN secrets are not set."
+            exit 1
+          fi
+
+      # Start the branch fresh from the current default branch every run, so the
+      # PR is always "main vs the current pool", never an accumulation.
+      - name: Regenerate the pack
+        run: |
+          git checkout -B "$BRANCH"
+          node collector/promote.mjs --url "$COLLECTOR_URL" --min "${MIN:-3}" | tee /tmp/promote.txt
+
+      - name: Open / update PR
+        run: |
+          if git diff --quiet -- Data/CommunityPack.lua; then
+            echo "No changes — the shipped pack already matches the verified pool. Nothing to do."
+            exit 0
+          fi
+          git config user.name "vantage-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Data/CommunityPack.lua
+          git commit -m "Community pack: promote verified intel"
+          git push --force-with-lease origin "$BRANCH"
+
+          {
+            echo "Automated update to \`Data/CommunityPack.lua\` from the community intel pool."
+            echo "Every entry cleared cross-check + the distinct-confirmer bar; curated padlocks were refused."
+            echo
+            echo '```'
+            cat /tmp/promote.txt
+            echo '```'
+            echo
+            echo "**Review the diff, then merge and bump the version to ship it.** Nothing reaches players until you do."
+          } > /tmp/pr-body.md
+
+          gh pr create --base "${{ github.ref_name }}" --head "$BRANCH" \
+            --title "Community pack update" --body-file /tmp/pr-body.md \
+            || echo "A PR for $BRANCH already exists — force-push updated it."

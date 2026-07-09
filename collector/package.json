@@ -1,0 +1,17 @@
+{
+  "name": "vantage-intel-collector",
+  "version": "0.11.0",
+  "private": true,
+  "type": "module",
+  "description": "Community kickable-spell intel pool for the Vantage WoW addon.",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node test.mjs",
+    "promote": "node promote.mjs",
+    "seed": "node build-seed.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1"
+  }
+}

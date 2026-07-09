@@ -45,7 +45,11 @@ local function pruneOldest(spells)
 end
 
 -- Bank a spell we just watched get interrupted. Cheap; safe to call often.
-function M:Note(spellName, spellID, zone)
+-- The trailing args are EVIDENCE: `byName`/`byId` is the interrupt that landed
+-- (proof it was a real stop, not a claim), and `npc` is the caster's creatureID.
+-- They ride along into the community intel payload so the collector can verify
+-- a submission instead of trusting it — see Modules/Contribute.lua.
+function M:Note(spellName, spellID, zone, byName, byId, npc)
     if Vantage.db and Vantage.db.learn == false then return end
     if type(spellName) ~= "string" or spellName == "" then return end
     local key = spellName:lower()
@@ -63,12 +67,15 @@ function M:Note(spellName, spellID, zone)
         e.last = now
         if zone then e.zone = zone end
         if spellID and not e.id then e.id = spellID end
+        if byName and not e.by then e.by, e.byId = byName, byId end
+        if npc and not e.npc then e.npc = npc end
         return
     end
 
     if d.count >= CAP and pruneOldest(d.spells) then d.count = d.count - 1 end
     d.spells[key] = {
         name = spellName, id = spellID, n = 1, first = now, last = now, zone = zone,
+        by = byName, byId = byId, npc = npc, -- evidence for crowdsourced verification
         -- These make the entry a valid Vantage.GetKickInfo result, so the lookup
         -- just returns it and Evaluate treats the cast as a real kick.
         interruptible = true, learned = true, priority = 2, category = "learned",

@@ -141,7 +141,7 @@ Vantage:RegisterEvent("PLAYER_LOGIN", function()
     if not prev then
         Vantage:Print("First time? Make sure enemy nameplates are ON (default key |cffffd100V|r), then target any enemy and type |cffffd100/vantage test|r to see the interrupt cue fire.")
     elseif prev ~= Vantage.version then
-        Vantage:Print(("Updated |cffffd100%s -> %s|r. New: a Style section in |cffffd100/vantage|r — font face & treatment, gradient or flat bars, bar heights, execute threshold, and alert sound.")
+        Vantage:Print(("Updated |cffffd100%s -> %s|r. New: |cffffd100/vantage contribute|r shares the kicks Vantage taught itself with the whole community (anonymous) — so everyone's game gets smarter together.")
             :format(prev, Vantage.version))
     end
 end)
@@ -195,6 +195,8 @@ SlashCmdList["VANTAGE"] = function(msg)
         if Vantage.Parse then Vantage.Parse:Roster() end
     elseif cmd == "export" then
         if Vantage.ParseExport then Vantage.ParseExport:Toggle() end
+    elseif cmd == "contribute" or cmd == "intel" then
+        if Vantage.Contribute then Vantage.Contribute:Toggle() end
     elseif cmd == "brief" then
         if Vantage.Briefing then Vantage.Briefing:Brief(true) end
     elseif cmd == "party" then
@@ -238,6 +240,7 @@ function Vantage:ShowHelp()
     print("  /vantage roster   - interrupt profiles of every player Vantage has seen")
     print("  /vantage learn    - toggle learning kicks from live combat")
     print("  /vantage learned  - casts Vantage taught itself are kickable")
+    print("  /vantage contribute - share your learned kicks with the community pack")
     print("  /vantage export   - copy session data for the web report")
 end
 

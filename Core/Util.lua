@@ -4,7 +4,7 @@
 local addonName, Vantage = ...
 
 Vantage.name = addonName
-Vantage.version = "0.10.0"
+Vantage.version = "0.11.0"
 
 -- ---------------------------------------------------------------------------
 -- Output
@@ -65,6 +65,62 @@ function Vantage:RGB(key)
     end
     local c = self.colors[key]
     return c[1], c[2], c[3]
+end
+
+-- ---------------------------------------------------------------------------
+-- Anonymous install identity + GUID helpers (used by the community intel layer).
+--
+-- InstallID is a random, one-time, account-wide token. It carries NO character
+-- or realm info — its only job is to let the community collector count DISTINCT
+-- contributors (so a spell needs several independent confirmers before it's
+-- trusted) without ever identifying who you are. It lives in VantageLearnedDB
+-- so it survives a settings reset, like the learned intel it accompanies.
+-- ---------------------------------------------------------------------------
+local function hashStr(s)
+    local h = 5381
+    for i = 1, #s do h = (h * 33 + s:byte(i)) % 2147483648 end
+    return h
+end
+
+local seeded = false
+local function seedOnce()
+    if seeded then return end
+    seeded = true
+    -- Fold the character GUID into the SEED (never the output): two installs
+    -- created in the same second still diverge, but the token reveals nothing.
+    local t   = (time and time()) or 0
+    local gt  = (GetTime and math.floor(GetTime() * 1000)) or 0
+    local g   = (UnitGUID and UnitGUID("player")) or ""
+    math.randomseed((t + gt + hashStr(g)) % 2147483648)
+end
+
+local function newUUID()
+    seedOnce()
+    return ("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"):gsub("[xy]", function(c)
+        local v = (c == "x") and math.random(0, 15) or math.random(8, 11)
+        return string.format("%x", v)
+    end)
+end
+
+function Vantage:InstallID()
+    if type(VantageLearnedDB) ~= "table" then VantageLearnedDB = {} end
+    if not VantageLearnedDB.uuid then VantageLearnedDB.uuid = newUUID() end
+    return VantageLearnedDB.uuid
+end
+
+-- Pull the creatureID out of a unit GUID (Creature-0-srv-inst-zone-<ID>-spawn).
+-- This is the cross-check anchor: the collector can verify a submitted spell is
+-- actually cast by this NPC, and in the submitted zone. Returns nil for players,
+-- pets we can't map, or the simplified GUIDs used in tests.
+function Vantage:NpcID(guid)
+    if type(guid) ~= "string" then return nil end
+    local parts = {}
+    for seg in guid:gmatch("[^-]+") do parts[#parts + 1] = seg end
+    local kind, id = parts[1], parts[6]
+    if id and (kind == "Creature" or kind == "Vehicle") then
+        return tonumber(id)
+    end
+    return nil
 end
 
 -- ---------------------------------------------------------------------------

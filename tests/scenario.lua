@@ -214,16 +214,49 @@ ok(VantageParseDB.roster["Ganker"] == nil, "hostile players stay out of the rost
 SlashCmdList["VANTAGE"]("roster") -- smoke: prints without error
 
 -- 6c. Self-learning: watching a cast get interrupted banks it as kickable.
--- A hostile caster (destFlags 0x40) casts an UNCURATED spell (Radiation Bolt,
--- straight from a real Gnomeregan log) and a groupmate kicks it.
+-- A hostile caster (destFlags 0x40) casts an UNCURATED spell and a groupmate
+-- kicks it. NOTE: a deliberately SYNTHETIC spell (id/name that no seed verifies
+-- and nobody would ever promote) so this stays valid even after real casts like
+-- Radiation Bolt land in Data/CommunityPack.lua — once a spell is in the pack
+-- it's "known", so the addon correctly stops re-learning it.
 H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-2-KICKER", "Kickbot", 0x512, 0,
-    "Creature-0-8888", "Irradiated Pillager", 0x40, 0, 2139, "Counterspell", 0,
-    9771, "Radiation Bolt")
+    "Creature-0-1-0-0-7053-000023BE71", "Irradiated Pillager", 0x40, 0, 2139,
+    "Counterspell", 0, 9990001, "Harness Test Cast")
 H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
 local learned = VantageLearnedDB and VantageLearnedDB.spells
-ok(learned and learned["radiation bolt"] ~= nil, "learned an uncurated interrupted cast")
-local li = Vantage.GetKickInfo("Radiation Bolt", 9771)
+ok(learned and learned["harness test cast"] ~= nil, "learned an uncurated interrupted cast")
+local li = Vantage.GetKickInfo("Harness Test Cast", 9990001)
 ok(li and li.interruptible == true and li.learned, "learned cast now looks up as kickable")
+-- the learned entry banks EVIDENCE for crowdsourced verification: the interrupt
+-- that landed, and the caster's creatureID pulled from the GUID.
+eq(learned["harness test cast"].by, "Counterspell", "learned entry records the interrupt that landed")
+eq(learned["harness test cast"].npc, 7053, "learned entry records the caster's creatureID")
+
+-- the /vantage contribute payload: anonymous, evidence-bearing, stable install id
+local pay = Vantage.Contribute:BuildPayload()
+eq(pay.kind, "vantage-intel", "contribute payload is tagged")
+ok(type(pay.uuid) == "string" and #pay.uuid >= 8, "contribute payload carries an install id")
+eq(pay.uuid, Vantage:InstallID(), "install id is stable across calls")
+eq(pay.count, #pay.spells, "payload count matches the spell list")
+local shared
+for _, s in ipairs(pay.spells) do if s.id == 9990001 then shared = s end end
+ok(shared ~= nil, "learned spell rides along in the contribute payload")
+eq(shared and shared.by, "Counterspell", "payload carries the interrupt evidence")
+eq(shared and shared.npc, 7053, "payload carries the caster creatureID")
+ok(shared.name == nil or shared.name == "Harness Test Cast", "payload keeps the spell name")
+local blob = Vantage.Contribute:BuildString()
+ok(type(blob) == "string" and blob:find("vantage-intel", 1, true), "payload encodes to a JSON string")
+SlashCmdList["VANTAGE"]("contribute") -- smoke: opens the copy window without error
+
+-- 6d. Community pack (redistribution): promoted entries fill gaps, but the
+-- curated pack always wins — a community add() can never override a padlock.
+ok(Vantage.CommunityPack and Vantage.CommunityPack.add, "community pack exposes add()")
+Vantage.CommunityPack.add(88888, "Fake Community Cast")
+local cc = Vantage.GetKickInfo("Fake Community Cast", 88888)
+ok(cc and cc.interruptible == true and cc.community, "community entry fills an unknown gap as kickable")
+Vantage.CommunityPack.add(nil, "Tranquility") -- try to override a curated padlock
+local tq = Vantage.GetKickInfo("Tranquility")
+ok(tq and tq.interruptible == false and not tq.community, "curated padlock is never overridden by the community pack")
 -- A curated padlock is NEVER shadowed or overridden, even if it gets 'interrupted'
 -- (e.g. a same-named spell on a different mob that IS kickable).
 H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-2-KICKER", "Kickbot", 0x512, 0,

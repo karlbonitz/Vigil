@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.11.0 — the community update
+
+Vantage already teaches *itself* which casts are kickable (v0.10.0). Now that
+hard-won knowledge can flow back into the shipped pack, so the whole player base
+builds the kickable-spell database together — everyone's game gets smarter as a
+group, and new players inherit it on day one.
+
+- **`/vantage contribute`** packages the kicks you've self-learned into an
+  **anonymous** blob — your character and realm are never sent, only spell IDs and
+  the evidence that they're really interruptible. Copy it, then hit **Contribute**
+  on the report page.
+- **Built to resist bad data.** Every spell carries proof (the interrupt that
+  stopped it + the caster) so the collector can *verify* it, not just trust it; a
+  spell needs several independent confirmers before it's considered; and the
+  curated pack can never be overridden — the pool only ever *adds* kicks to casts
+  we had no intel on.
+- **`Data/CommunityPack.lua`** receives the confirmed, reviewed entries and ships
+  them like any other update. (Collector + tooling live in `collector/`.)
+
 ## v0.10.0 — the self-learning update
 
 Vantage now teaches itself which casts are interruptible, from what it watches in

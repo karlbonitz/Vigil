@@ -1,0 +1,8 @@
+{
+  "_comment": "Datamined cross-check seed. Key = spellID. This is ground truth the collector checks submissions against BEFORE a spell can auto-verify. Build it from wago.tools / wow.tools spell + creature data for the 2.5.x client, or grow it by hand-approving 'pending' candidates. Upload to the SEED KV namespace under key 'seed'. With NO seed, every submission stays 'pending' and only your manual review promotes anything — safe by default.",
+  "_fields": "name (required), npcs (optional creatureIDs known to cast it), zones (optional), interruptible (set false to hard-reject a known padlock)",
+  "9771": { "name": "Radiation Bolt", "npcs": [7053, 6235], "zones": ["Gnomeregan"] },
+  "10461": { "name": "Chain Lightning", "npcs": [7012] },
+  "10179": { "name": "Frostbolt", "npcs": [7051] },
+  "44201": { "name": "Tranquility", "interruptible": false }
+}

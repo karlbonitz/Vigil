@@ -57,16 +57,21 @@ local function enc(v, out)
     end
 end
 
+-- Encode any Lua value to a JSON string. Shared with Modules/Contribute.lua so
+-- the addon has exactly one JSON encoder. (Dot-call: Vantage.ParseExport.Encode.)
+function M.Encode(payload)
+    local out = {}
+    enc(payload, out)
+    return table.concat(out)
+end
+
 function M:BuildExport()
-    local payload = {
+    return M.Encode({
         v        = 1,
         exported = time(),
         sessions = (VantageParseDB and VantageParseDB.sessions) or {},
         roster   = (VantageParseDB and VantageParseDB.roster) or {},
-    }
-    local out = {}
-    enc(payload, out)
-    return table.concat(out)
+    })
 end
 
 -- ---------------------------------------------------------------------------
