@@ -88,10 +88,16 @@ local function seedOnce()
     seeded = true
     -- Fold the character GUID into the SEED (never the output): two installs
     -- created in the same second still diverge, but the token reveals nothing.
-    local t   = (time and time()) or 0
-    local gt  = (GetTime and math.floor(GetTime() * 1000)) or 0
-    local g   = (UnitGUID and UnitGUID("player")) or ""
-    math.randomseed((t + gt + hashStr(g)) % 2147483648)
+    -- math.randomseed faults on the 2.5.x client, and it isn't load-bearing here
+    -- (WoW auto-seeds math.random per session; the UUID already has 122 random
+    -- bits). Guard + pcall it so a bad randomseed can NEVER take down InstallID —
+    -- which would otherwise error the entire /vantage contribute flow.
+    if type(math.randomseed) == "function" then
+        local t   = (time and time()) or 0
+        local gt  = (GetTime and math.floor(GetTime() * 1000)) or 0
+        local g   = (UnitGUID and UnitGUID("player")) or ""
+        pcall(math.randomseed, (t + gt + hashStr(g)) % 2147483648)
+    end
 end
 
 local function newUUID()
