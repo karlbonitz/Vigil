@@ -57,7 +57,9 @@ the same skin when Blizzard shows them. Every piece is configurable from the
 options panel (`/vantage`), and the defaults are tuned to look great with zero
 setup.
 
-> Dependency-free by design (no libraries), so it loads instantly. Shareable
+> Nearly dependency-free — the one embedded library is LibThreatClassic2 (for
+> reliable threat on 2.5.x, where the native API isn't); everything else is pure
+> WoW API, so it still loads fast. Shareable
 > "Intel Pack" import strings and the Vantage Parse data layer are the next
 > milestones on top of this structure.
 

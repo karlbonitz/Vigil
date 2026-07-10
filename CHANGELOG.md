@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.12.0 — sharper cues
+
+- **Community trust gradient.** A crowdsourced kick (pooled via `/vantage
+  contribute`) now cues *quietly* — the glow shows, but no alert sound — until you
+  personally land a kick on that cast, when it graduates to the full cue. A rare bad
+  pooled entry can't scream a false `INTERRUPT`.
+- **Diminishing returns.** Soft CC cues (Fear / Stun / …) now respect DR: once
+  you've stacked a category on a target to the immune point, Vantage stops telling
+  you to re-apply it. Below the immune bar the cue stays — a reduced stop is still a
+  stop.
+- **Sharper timing.** A cast Vantage picks up already in progress shows its *true*
+  remaining time instead of over-counting, and a cast already too far gone to kick
+  shows the glow but holds the alert — a beep you can't act on is just noise.
+- **Real threat.** The amber "about to pull" warning now reads actual threat from an
+  embedded **LibThreatClassic2** (the 2.5.x native threat API is unreliable), and
+  falls back to Vantage's own estimate when the library isn't present.
+- **Cleaner threat display.** The aggro strip under the bar now shows only on your
+  current target — on every other plate the border already carries the threat color,
+  so the redundant "line under the bar" is gone.
+
 ## v0.11.0 — the community update
 
 Vantage already teaches *itself* which casts are kickable (v0.10.0). Now that

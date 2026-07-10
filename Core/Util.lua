@@ -4,7 +4,7 @@
 local addonName, Vantage = ...
 
 Vantage.name = addonName
-Vantage.version = "0.11.0"
+Vantage.version = "0.12.0"
 
 -- ---------------------------------------------------------------------------
 -- Output

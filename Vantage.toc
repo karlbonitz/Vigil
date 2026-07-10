@@ -2,7 +2,7 @@
 ## Title: Vantage
 ## Notes: Interrupt-smart nameplates — know exactly when to kick, and when not to waste it.
 ## Author: karlbonitz
-## Version: 0.11.0
+## Version: 0.12.0
 ## SavedVariables: VantageDB, VantageParseDB, VantageLearnedDB
 ## X-Category: Combat
 ## X-Website: https://github.com/karlbonitz/Vantage

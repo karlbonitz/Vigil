@@ -53,8 +53,9 @@ even your pet and stance — and lights up the plate the moment acting matters:
 **Zero configuration.** Install it and pull a caster pack — the defaults are
 tuned. Everything is toggleable via `/vantage` (a native options panel).
 
-**Zero dependencies.** No libraries, decorates the default Blizzard plates
-(plays nice with taint), instant load.
+**Featherweight.** One embedded library (LibThreatClassic2, for reliable threat on
+2.5.x where the native API isn't); otherwise pure Blizzard API, decorating the
+default plates (plays nice with taint) for a fast load.
 
 Interruptibility starts from a hand-curated, verified spell database — all TBC
 heroics, Karazhan, Gruul/Magtheridon, and SSC/Tempest Keep — not the client's
