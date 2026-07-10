@@ -350,6 +350,27 @@ mob.threat = { isTanking = true, status = 2, pct = 100 }
 ok(TE:RivalClosing("nameplate1"), "tank INSECURELY tanking (status 2) -> rival closing (amber)")
 mob.threat = nil
 
+-- 6i. Threat-strip de-dup: the border already carries the threat color on non-target
+-- plates, so the strip (the "line under the bar") shows ONLY on your current target
+-- (border = accent there) — unless the skin is off, when the strip carries it.
+local prevGroup, prevTarget, prevN1T = H.inGroup, H.alias["target"], H.alias["nameplate1target"]
+H.inGroup = true
+Vantage.db.threat = true
+Vantage.db.skin = true
+H.alias["nameplate1target"] = "player"  -- the mob is on YOU -> threatBad color
+H.alias["target"] = "nameplate1"         -- ...and it IS your current target
+H.Advance(0.3)
+ok(o.threatStrip:IsShown(), "strip shows on your current target (border there is the accent)")
+H.alias["target"] = "player"             -- no longer your target -> border carries threat
+H.Advance(0.3)
+ok(not o.threatStrip:IsShown(), "strip hidden on a non-target plate (border carries it)")
+Vantage.db.skin = false                  -- no skin -> no colored border, strip must carry it
+H.Advance(0.3)
+ok(o.threatStrip:IsShown(), "with the skin off, the strip carries threat on non-target plates")
+Vantage.db.skin = true
+H.alias["nameplate1target"] = prevN1T; H.alias["target"] = prevTarget; H.inGroup = prevGroup
+H.Advance(0.3)
+
 -- 6c. Dungeon briefing: zone-in to a tagged instance prints the kick sheet once
 local before = #H.printed
 H.FireEvent("ZONE_CHANGED_NEW_AREA") -- stub instance = Shadow Labyrinth, party
@@ -553,7 +574,7 @@ H.Advance(0.3)
 bc = uf2.healthBar.__barcolor
 ok(bc and bc[1] > 0.9 and bc[2] > 0.5 and bc[2] < 0.9,
    "1.4x the holder's damage: AMBER bar (closing in, not yet red)")
-ok(o2.threatStrip:IsShown(), "amber strip shown while closing in")
+ok(not o2.threatStrip:IsShown(), "amber strip de-duped on the non-target plate (the bar/border carries it)")
 -- the red ground truth always outranks the estimate
 H.alias.nameplate2target = "player"
 H.FireEvent("UNIT_THREAT_LIST_UPDATE")

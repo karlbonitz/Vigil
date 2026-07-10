@@ -50,7 +50,13 @@ local function update()
     for unit, overlay in pairs(Vantage.plates) do
         -- keep running with the toggle off so stale strips/borders CLEAR
         local key = Vantage.db.threat and colorForStatus(unit) or nil
-        if key then
+        -- The plate BORDER already carries the threat color on non-target plates
+        -- (Skin border order: target accent > threat > black), so showing the strip
+        -- there too is the redundant "line under the bar". Keep the strip only where
+        -- it adds signal: your CURRENT TARGET (whose border shows the accent instead),
+        -- or everywhere when the skin is off and no colored border carries it.
+        local stripNeeded = key and (Vantage.db.skin == false or UnitIsUnit(unit, "target"))
+        if stripNeeded then
             overlay.threatStrip:SetVertexColor(Vantage:RGB(key))
             overlay.threatStrip:Show()
         else
