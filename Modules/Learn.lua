@@ -50,7 +50,6 @@ end
 -- They ride along into the community intel payload so the collector can verify
 -- a submission instead of trusting it — see Modules/Contribute.lua.
 function M:Note(spellName, spellID, zone, byName, byId, npc)
-    if Vantage.db and Vantage.db.learn == false then return end
     if type(spellName) ~= "string" or spellName == "" then return end
     local key = spellName:lower()
 
@@ -58,12 +57,18 @@ function M:Note(spellName, spellID, zone, byName, byId, npc)
     -- interrupted, even if it's already curated/community. Community-pack entries
     -- stay a quiet "tentative" cue until they're confirmed here, so a rare bad
     -- pooled entry can't fire a full false alarm on a cast you've never seen kicked.
+    -- This is INDEPENDENT of the learn toggle: seeing a kick land is ground truth
+    -- for the trust gradient even when you've opted out of banking new learned casts.
     do
         local dd = store()
         if type(dd.confirmed) ~= "table" then dd.confirmed = {} end
         if spellID then dd.confirmed["#" .. spellID] = true end
         dd.confirmed[key] = true
     end
+
+    -- Banking a NEW learned entry is what the learn toggle gates (the local
+    -- confirmation above is not).
+    if Vantage.db and Vantage.db.learn == false then return end
 
     -- Already curated (either direction)? We already know about it — never shadow
     -- a hand-verified entry, and don't clutter the learned table with knowns.

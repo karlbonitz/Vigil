@@ -49,7 +49,7 @@ function M:OnEnable()
     scroll:SetPoint("TOPLEFT", 0, -4)
     scroll:SetPoint("BOTTOMRIGHT", -27, 4)
     local content = CreateFrame("Frame")
-    content:SetSize(590, 1010)
+    content:SetSize(590, 1040)
     scroll:SetScrollChild(content)
 
     local checks, sliders, drops = {}, {}, {}
@@ -372,6 +372,11 @@ function M:OnEnable()
         "Watches the combat log for groupmates' interrupts and infers their cooldowns — nobody else needs the addon. When a kickable cast is up and YOUR stop is down, the cue quietly names a groupmate whose interrupt should be ready. No glow, no sound: their moment, not your shout.")
     check(COL2, y, "learn", "Learn kicks from combat",
         "Vantage watches every cast that gets interrupted — yours or a groupmate's — and banks it as kickable, since you can't interrupt an uninterruptible cast. Casts the curated pack has never heard of become real kick cues the next time they appear. Curated \"do not kick\" markers are never overridden. /vantage learned lists what it has picked up.")
+    y = y - 24
+    check(PAD, y, "kickPriority", "Prioritize the top cast",
+        "When several casts are kickable at once you can only stop one — so Vantage shouts for the single highest-priority cast and keeps the rest kickable-colored but quiet, pointing you at the kick that matters. /vantage priority toggles it.")
+    check(COL2, y, "announce", "Announce your interrupts",
+        "Call out each interrupt you land (yours or your pet's) to party/raid chat — off by default, and throttled so a flurry of kicks never spams. Pair with /vantage kicks to see which groupmates have a stop ready right now.")
     y = y - 28
 
     y = header("Your auras", y)

@@ -213,6 +213,39 @@ H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
 ok(VantageParseDB.roster["Ganker"] == nil, "hostile players stay out of the roster")
 SlashCmdList["VANTAGE"]("roster") -- smoke: prints without error
 
+-- 6b-pets: pet interrupts are attributed to the OWNER (a Felhunter's Spell Lock).
+-- (i) YOUR pet's kick counts as YOURS — the outcome row reads by="me", it lands in
+-- your own roster profile and the "interrupted by you" tally, and (grouped +
+-- opt-in) it's called out to the party exactly like a kick from your own hand.
+local prevGrp = H.inGroup
+H.inGroup = true
+H.units.pet = { name = "Felhunter", guid = "Pet-MINE-1" }
+H.FireEvent("UNIT_PET") -- PartyKicks maps Pet-MINE-1 -> you
+H.range[cfg.spell] = 1
+H.units.nameplate1.casting = { name = "Greater Heal", spellID = 25314,
+    startMS = H.now * 1000, endMS = (H.now + 3) * 1000 }
+H.FireEvent("UNIT_SPELLCAST_START", "nameplate1") -- opens a tracked row for MOB_GUID
+local psess = VantageParseDB.sessions[#VantageParseDB.sessions]
+local petRow = psess.rows[#psess.rows]
+local myInt0 = psess.counters.myInterrupts
+local myKicks0 = VantageParseDB.roster["Testchar"].kicks
+Vantage.db.announce = true
+H.chat = {}
+H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Pet-MINE-1", "Felhunter", 0x1111, 0, MOB_GUID,
+    "Cabal Acolyte", 0x40, 0, 19244, "Spell Lock", 0, 25314, "Greater Heal")
+H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
+eq(petRow.by, "me", "your pet's interrupt is attributed to you (row by=me)")
+eq(petRow.out, "int", "your pet's interrupt resolves the open row")
+eq(psess.counters.myInterrupts, myInt0 + 1, "your pet's kick counts in 'interrupted by you'")
+eq(VantageParseDB.roster["Testchar"].kicks, myKicks0 + 1, "your pet's kick lands in YOUR profile")
+ok(VantageParseDB.roster["Felhunter"] == nil, "the pet itself never gets a roster profile")
+ok(#H.chat >= 1 and H.chat[1][1]:find("Greater Heal", 1, true),
+   "your pet's kick is announced to the group like your own")
+Vantage.db.announce = false
+H.inGroup = prevGrp
+H.units.nameplate1.casting = nil
+H.Advance(1.0) -- clear the KICKED flash
+
 -- 6c. Self-learning: watching a cast get interrupted banks it as kickable.
 -- A hostile caster (destFlags 0x40) casts an UNCURATED spell and a groupmate
 -- kicks it. NOTE: a deliberately SYNTHETIC spell (id/name that no seed verifies
@@ -298,6 +331,19 @@ H.units.nameplate1.casting = { name = "Fake Community Nuke", spellID = 77777,
 H.FireEvent("UNIT_SPELLCAST_START", "nameplate1")
 eq(o.kickText:GetText(), cfg.label, "confirmed community cue shows the full label (no '?')")
 eq(H.sounds, sBefore2 + 1, "confirmed community cue fires the alert")
+
+-- regression: local confirmation must work even with self-learning turned OFF — the
+-- community trust gradient (quiet -> full) can't silently depend on the learn toggle.
+Vantage.db.learn = false
+ok(not Vantage.Learn:IsConfirmed(55501, "Learn-Off Cast"), "learn-off: cast starts unconfirmed")
+H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Player-1-ME", "Testchar", 0x511, 0,
+    "Creature-0-LEARNOFF", "Some Caster", 0x40, 0, 2139, "Counterspell", 0, 55501, "Learn-Off Cast")
+H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
+ok(Vantage.Learn:IsConfirmed(55501, "Learn-Off Cast"),
+   "a witnessed kick confirms it locally even with /vantage learn OFF")
+ok(not (VantageLearnedDB.spells and VantageLearnedDB.spells["learn-off cast"]),
+   "...but with learning off it is NOT banked as a new learned entry")
+Vantage.db.learn = true
 
 -- 6f. Diminishing returns: repeated CC of one category makes the next application
 -- immune, and TargetSusceptible (so the cue) suppresses that soft stop. Below the
@@ -428,6 +474,22 @@ H.FireEvent("SPELL_UPDATE_COOLDOWN")
 ok(o.kickF:IsShown() and not o.kickIsMate, "your ready shout displaces the mate hint")
 eq(o.kickText:GetText(), cfg.label, "shout label restored")
 eq(H.sounds, soundsBefore + 1, "the shout brings its sound")
+-- (ii) a GROUPMATE's pet interrupt builds the OWNER's profile, not the pet's — a
+-- warlock's Felhunter Spell Lock is credited to the warlock (grouped kick + class),
+-- resolved through the owner's GUID rather than the un-classable pet GUID.
+H.units.partypet1 = { name = "Grimjaw's Felhunter", guid = "Pet-GRIM-FEL" }
+H.FireEvent("GROUP_ROSTER_UPDATE") -- maps Pet-GRIM-FEL -> party1 (Grimjaw)
+H.SetCLEU(nil, "SPELL_INTERRUPT", nil, "Pet-GRIM-FEL", "Grimjaw's Felhunter", 0x1112, 0,
+    "Creature-0-9999", "Some Caster", 0, 0, 19244, "Spell Lock", 0, 133, "Fireball")
+H.FireEvent("COMBAT_LOG_EVENT_UNFILTERED")
+local gp = VantageParseDB.roster["Grimjaw"]
+ok(gp ~= nil, "a groupmate's pet interrupt builds the OWNER's roster profile")
+eq(gp and gp.kicks, 1, "the owner is credited with the kick")
+eq(gp and gp.gkicks, 1, "grouped (owner in your party) -> gkick counted")
+eq(gp and gp.tools and gp.tools["Spell Lock"], 1, "the pet's tool is tallied to the owner")
+eq(gp and gp.class, "MAGE", "owner class resolved from the OWNER's guid")
+ok(VantageParseDB.roster["Grimjaw's Felhunter"] == nil, "the pet never gets its own profile")
+
 -- Grimjaw leaves the group: he can never be hinted again
 H.groupSize = 0
 H.inGroup = false
@@ -664,6 +726,16 @@ H.Advance(0.3)
 ok(oA.kickF:IsShown(), "with prioritization off, every kickable cast shouts")
 Vantage.db.kickPriority = true
 
+-- regression: a higher-priority cast you CANNOT act on (out of YOUR range) must not
+-- silence a lower-priority cast you can — else both go quiet and you miss the kick.
+-- (nameplate4 holds the pri-9 cast; put only it out of your interrupt's range.)
+H.rangeByUnit = { nameplate4 = { [cfg.spell] = 0 } }
+H.Advance(0.3) -- ticker re-evaluates both live casts
+ok(oB.active and oB.active.code == "range", "the higher-priority cast is out of range (not actionable)")
+ok(oA.kickF:IsShown(), "the lower-priority cast you CAN kick shouts (not silenced by an unkickable higher one)")
+H.rangeByUnit = nil
+H.Advance(0.3)
+
 -- 12c. Shareable Intel Packs: export self-learned kicks to a string; import merges
 -- (curated/community always win; garbage is rejected).
 Vantage.db.learn = true
@@ -685,6 +757,13 @@ local tq = Vantage.GetKickInfo("Tranquility")
 ok(tq and tq.interruptible == false, "import never overrides a curated padlock")
 local _, _, badok = Vantage.IntelPack:Import("not a pack string")
 ok(badok == false, "garbage input is rejected, not merged")
+-- regression: absurd/overflow and zero spell ids are rejected (a huge digit run
+-- becomes a float that would re-serialize as "1e+26" and drop on a friend's re-import)
+local addHuge = Vantage.IntelPack:Import("VTGPACK1;99999999999999999999999999~Huge Cast~Zone")
+eq(addHuge, 0, "an overflow spell id is rejected, not banked")
+ok(Vantage.GetKickInfo("Huge Cast") == nil, "the overflow-id cast never enters the learned table")
+local addZero = Vantage.IntelPack:Import("VTGPACK1;0~Zero Id Cast~Zone")
+eq(addZero, 0, "a zero spell id is rejected")
 
 -- 12d. Group kick coordination: opt-in, throttled call-outs of YOUR interrupts,
 -- plus a party-readiness readout (/vantage kicks).

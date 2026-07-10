@@ -105,9 +105,9 @@ end
 
 -- ---------------------------------------------------------------------------
 -- The roster: per-player interrupt profiles, fed by every SPELL_INTERRUPT a
--- friendly player lands anywhere near you (grouped or not). Pets are skipped
--- for now — attributing a Felhunter's Spell Lock to its warlock needs a
--- pet->owner map (known limitation).
+-- friendly player lands anywhere near you (grouped or not). A pet's interrupt
+-- (a Felhunter's Spell Lock) is credited to the player who owns it, resolved
+-- through PartyKicks' pet->owner map.
 -- ---------------------------------------------------------------------------
 local rosterN = 0
 
@@ -170,9 +170,19 @@ local function onCLEU()
     local _, sub, _, srcGUID, _, _, _, dstGUID = CombatLogGetCurrentEventInfo()
 
     if sub == "SPELL_INTERRUPT" then
+        -- A pet's interrupt (a Felhunter's Spell Lock) belongs to its owner: resolve
+        -- srcGUID -> the responsible player so the kick counts for the warlock, not
+        -- "Felhunter". ownerName is nil for a direct player cast (the source already
+        -- IS the player) and for pets we can't map.
+        local ownerName, ownerGUID, ownerMine
+        if Vantage.PartyKicks then
+            ownerName, ownerGUID, ownerMine = Vantage.PartyKicks:OwnerOf(srcGUID)
+        end
+        local mine = (srcGUID == myGUID) or ownerMine or false
+
         local row = openByGuid[dstGUID]
         if row then
-            local by = (srcGUID == myGUID) and "me" or "other"
+            local by = mine and "me" or "other"
             local rx
             if by == "me" and row.readyAt then
                 rx = math.floor((GetTime() - row.readyAt) * 1000)
@@ -180,11 +190,15 @@ local function onCLEU()
             finish(row, "int", by, rx)
             openByGuid[dstGUID] = nil
         end
-        if srcGUID == myGUID then
+        if mine then
             session.counters.myInterrupts = session.counters.myInterrupts + 1
         end
         local _, _, _, _, sName, sFlags, _, _, _, _, _, _, kickSpell = CombatLogGetCurrentEventInfo()
-        if isFriendlyPlayer(sFlags) then
+        if ownerName then
+            -- a pet kick: credit the OWNER (their GUID also resolves the owner's class)
+            rosterTouch(ownerGUID, ownerName, sFlags, kickSpell)
+            Vantage:Debug("roster: pet interrupt by", sName, "credited to", ownerName)
+        elseif isFriendlyPlayer(sFlags) then
             rosterTouch(srcGUID, sName, sFlags, kickSpell)
             Vantage:Debug("roster: interrupt by", sName, "recorded",
                 isGrouped(sFlags) and "(grouped)" or "(bystander)")
@@ -201,7 +215,10 @@ local function onCLEU()
             finish(row, "done")
             openByGuid[srcGUID] = nil
         end
-        if srcGUID == myGUID and myInterruptNames[spellName] then
+        -- your interrupt CASTS (hit or miss), pet Spell Lock included — keeps
+        -- "interrupt casts" consistent with the pet-inclusive "interrupted by you".
+        local mine = (srcGUID == myGUID) or (Vantage.PartyKicks and Vantage.PartyKicks:IsMine(srcGUID))
+        if mine and myInterruptNames[spellName] then
             session.counters.kickCasts = session.counters.kickCasts + 1
             local tr = openByGuid[dstGUID]
             if tr and tr.tier == "locked" then

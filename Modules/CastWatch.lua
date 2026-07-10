@@ -65,13 +65,14 @@ local function onCLEU()
     -- YOUR interrupt landing on a cast marked do-not-kick: the padlock's lesson,
     -- delivered at the exact moment it was ignored. (Checked before the caster
     -- lookup below — here the source is you, not the mob.)
-    if sub == "SPELL_CAST_SUCCESS" and srcGUID == myGUID then
+    if sub == "SPELL_CAST_SUCCESS"
+        and (srcGUID == myGUID or (Vantage.PartyKicks and Vantage.PartyKicks:IsMine(srcGUID))) then
         local kickName = select(13, CombatLogGetCurrentEventInfo())
         if Vantage.IsMyInterrupt and Vantage:IsMyInterrupt(kickName) then
             local tUnit = Vantage.guidToUnit[dstGUID]
             local tOverlay = tUnit and Vantage.plates[tUnit]
             if tOverlay and tOverlay.active and tOverlay.active.code == "locked" then
-                tOverlay:FlashWasted() -- label only; the locked cast is still going
+                tOverlay:FlashWasted() -- label only; the locked cast is still going (your pet's kick too)
             end
         end
     end
@@ -91,8 +92,10 @@ local function onCLEU()
             local exID, exName = select(15, CombatLogGetCurrentEventInfo())
             Vantage.Learn:Note(exName, exID, GetRealZoneText and GetRealZoneText(),
                 byName, byId, Vantage:NpcID(dstGUID))
-            -- coordination: call out your OWN kick to the group (opt-in, throttled)
-            if srcGUID == myGUID and Vantage.db.announce and Vantage.PartyKicks then
+            -- coordination: call out your OWN kick to the group (opt-in, throttled).
+            -- Your pet's interrupt (a Felhunter's Spell Lock) counts as yours here too.
+            local mine = Vantage.PartyKicks and Vantage.PartyKicks:IsMine(srcGUID)
+            if mine and Vantage.db.announce then
                 Vantage.PartyKicks:Announce(exName)
             end
         end

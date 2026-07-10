@@ -48,7 +48,10 @@ function M:Import(str)
         if row ~= "" then
             local id, name, zone = row:match("^(%d+)" .. FSEP .. "(.-)" .. FSEP .. "(.*)$")
             id = tonumber(id)
-            if id and name and name ~= "" then
+            -- a real spell id is a small positive integer; reject 0 and absurd /
+            -- overflow ids (a huge digit run becomes a float that would re-serialize
+            -- as "1e+26" and be silently dropped on the friend's re-import)
+            if id and id > 0 and id < 2 ^ 31 and name and name ~= "" then
                 if Vantage.Learn and Vantage.Learn:Import(name, id, zone ~= "" and zone or nil) then
                     added = added + 1
                 else

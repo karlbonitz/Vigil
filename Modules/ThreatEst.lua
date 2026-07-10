@@ -63,11 +63,17 @@ end
 -- library isn't embedded or has no data for this mob yet. pct = % of the pull
 -- threshold (100 = you'd pull); status 3/2 = tanking (secure/insecure), 1 = above
 -- the tank but not tanking, 0 = below.
+--
+-- NB: for a mob you have NO threat on, LibThreatClassic2 returns status = 0 (NOT
+-- nil, despite its own doc comment) with pct = nil — so `pct` is the real "no data"
+-- sentinel. Gating on status would treat every no-threat mob as live data (status
+-- 0) and dead-end the damage-tally fallback in Closing/RivalClosing, which only
+-- runs when this returns nil.
 function M:Situation(unit)
     local lib = self.threatLib
     if not lib then return nil end
     local isTanking, status, pct = lib:UnitDetailedThreatSituation("player", unit)
-    if status == nil then return nil end
+    if pct == nil then return nil end
     return isTanking, status, pct
 end
 

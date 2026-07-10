@@ -394,7 +394,10 @@ do
     function tl:UnitDetailedThreatSituation(_, mob)
         local u = U(mob)
         local th = u and u.threat
-        if not th then return nil end
+        -- Match the real lib's contract: a mob you have NO threat on returns
+        -- status 0 (not nil) with pct nil — NOT an all-nil result. A bare nil here
+        -- masked the "status is never nil" bug in ThreatEst:Situation.
+        if not th then return false, 0, nil, nil, 0 end
         return th.isTanking or false, th.status, th.pct, th.pct, th.value or 0
     end
 end
@@ -433,6 +436,10 @@ end
 function GetSpellInfo(id) return "Spell" .. tostring(id), nil, 136207 end
 
 function IsSpellInRange(name, unit)
+    -- a per-unit override wins, so a test can put ONE target out of range while
+    -- another stays in (Harness.range is keyed by spell name = global to all units)
+    local pu = Harness.rangeByUnit and Harness.rangeByUnit[unit]
+    if pu and pu[name] ~= nil then return pu[name] end
     local r = Harness.range[name]
     if r == nil then return 1 end
     return r

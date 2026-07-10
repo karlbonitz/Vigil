@@ -28,7 +28,11 @@ function M:IsTopKick(overlay, info)
     for _, ov in pairs(Vantage.plates) do
         if ov ~= overlay then
             local a = ov.active
-            if a and a.info and a.info.interruptible == true
+            -- Only a cast you can actually stop RIGHT NOW (code "ready") outranks
+            -- this one. A higher-priority cast that's out of range or immune is
+            -- already quiet (its own tier hid it), so it must not silence the kick
+            -- you CAN land — otherwise both go quiet and you miss the interrupt.
+            if a and a.code == "ready" and a.info and a.info.interruptible == true
                 and ov.castbar:IsShown() and (a.info.priority or 0) > myPri then
                 return false
             end
@@ -178,7 +182,10 @@ function M:OnEnable()
         acc = acc + elapsed
         if acc < 0.25 then return end
         acc = 0
-        if Vantage.db.rangeCheck == false then return end
+        -- the ticker drives BOTH the range re-check (movement fires no event) and
+        -- the prioritized-cue re-eval (a higher-priority cast starting elsewhere has
+        -- to quiet this one). Run while EITHER is on; skip only when both are off.
+        if Vantage.db.rangeCheck == false and Vantage.db.kickPriority == false then return end
         reEvaluate()
     end)
 end

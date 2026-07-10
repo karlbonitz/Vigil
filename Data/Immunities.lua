@@ -228,7 +228,10 @@ function Vantage:DRImmune(guid, mechanic)
     return e.n >= DR_IMMUNE_AT
 end
 
--- Drop a unit's DR when it dies / its plate goes away (keeps drState bounded).
+-- Drop a unit's DR when it dies (wired to UNIT_DIED in CastWatch). A mob that
+-- leashes/despawns without dying isn't cleared here, but it ages out on its own:
+-- NoteDR/DRImmune treat an expired window as gone, so drState stays effectively
+-- bounded without a per-plate hook.
 function Vantage:ClearDR(guid)
     if guid then drState[guid] = nil end
 end

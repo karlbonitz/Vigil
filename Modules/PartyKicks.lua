@@ -33,11 +33,18 @@ local AFF_RAID    = COMBATLOG_OBJECT_AFFILIATION_RAID or 0x4
 
 local members  = {} -- name -> { class, spells = { spell -> readyAt } }
 local inGroup  = {} -- name -> unit token (current roster, excluding me)
-local petOwner = {} -- pet GUID -> owner name (current roster)
+local petOwner = {} -- pet GUID -> { name, guid, mine } of the owning player (you + group)
+local myGUID         -- cached in OnEnable; the owner your own pet maps to
 
 local function rebuildRoster()
     for k in pairs(inGroup) do inGroup[k] = nil end
     for k in pairs(petOwner) do petOwner[k] = nil end
+    -- Your OWN pet always maps to you (even solo), so a Felhunter's Spell Lock is
+    -- credited to you exactly like a kick from your own hand.
+    local myPet = UnitGUID and UnitGUID("pet")
+    if myPet then
+        petOwner[myPet] = { name = UnitName("player"), guid = myGUID, mine = true }
+    end
     if not (IsInGroup and IsInGroup()) then return end
     local raid = IsInRaid and IsInRaid()
     local n = (GetNumGroupMembers and GetNumGroupMembers()) or 0
@@ -53,7 +60,7 @@ local function rebuildRoster()
             m.class = class or m.class
             -- their pet, for owner attribution (Felhunter Spell Lock)
             local pg = UnitGUID((raid and "raidpet" or "partypet") .. i)
-            if pg then petOwner[pg] = name end
+            if pg then petOwner[pg] = { name = name, guid = UnitGUID(unit), mine = false } end
         end
     end
 end
@@ -65,7 +72,8 @@ local function onCLEU()
     if sub ~= "SPELL_CAST_SUCCESS" and sub ~= "SPELL_MISSED" then return end
     if not spellName or not KICK_CD[spellName] then return end
 
-    local owner = petOwner[srcGUID]
+    local po = petOwner[srcGUID]
+    local owner = po and po.name
     if not owner then
         if not (bit and bit.band and srcFlags) then return end
         if bit.band(srcFlags, TYPE_PLAYER) == 0 then return end
@@ -77,7 +85,8 @@ local function onCLEU()
     local m = members[owner]
     if not m then m = { spells = {} }; members[owner] = m end
     if not m.class and GetPlayerInfoByGUID then
-        local okc, _, class = pcall(GetPlayerInfoByGUID, srcGUID)
+        -- resolve from the OWNER's guid for a pet (a pet GUID won't resolve a class)
+        local okc, _, class = pcall(GetPlayerInfoByGUID, (po and po.guid) or srcGUID)
         if okc then m.class = class end
     end
     m.spells[spellName] = GetTime() + KICK_CD[spellName]
@@ -111,6 +120,26 @@ function M:ReadyMateLabel()
     local c = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
     if c then r, g, b = c.r, c.g, c.b end
     return name:upper() .. "'S " .. spell:upper(), r, g, b
+end
+
+-- Resolve a combat-log source GUID to the PLAYER responsible for it. Returns nil
+-- for a player's own GUID (the source already IS the player — callers handle that
+-- case directly) and for pets we can't map; otherwise the owner's name, the
+-- owner's GUID, and whether the pet is YOURS. This is how a Felhunter's Spell Lock
+-- gets credited to its warlock in Parse's roster and outcome rows.
+function M:OwnerOf(guid)
+    local po = guid and petOwner[guid]
+    if not po then return nil end
+    return po.name, po.guid, po.mine
+end
+
+-- Is this combat-log source YOU — either your own GUID, or your own pet (a
+-- Felhunter's Spell Lock)? Lets Parse/CastWatch count a pet kick as your own.
+function M:IsMine(guid)
+    if not guid then return false end
+    if guid == myGUID then return true end
+    local po = petOwner[guid]
+    return (po and po.mine) or false
 end
 
 -- ---------------------------------------------------------------------------
@@ -153,10 +182,12 @@ function M:Readout()
 end
 
 function M:OnEnable()
+    myGUID = UnitGUID("player")
     Vantage:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
     Vantage:RegisterEvent("GROUP_ROSTER_UPDATE", rebuildRoster)
     Vantage:RegisterEvent("UNIT_PET", rebuildRoster)
     Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", rebuildRoster)
+    rebuildRoster() -- map any pet / group that already exists at login
 end
 
 Vantage.PartyKicks = M

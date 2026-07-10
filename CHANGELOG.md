@@ -31,6 +31,10 @@
 - **Deeper Parse.** `/vantage parse` now tracks the CC breaks you caused and your
   dispels/steals, and reports your cue→interrupt reaction as a median and 90th
   percentile — all of it rides into the web-report export.
+- **Pets credit their owner.** A Felhunter's Spell Lock (any pet interrupt) now
+  counts for the *player* who owns the pet: your own pet's kicks show up as yours in
+  `/vantage parse`, and a groupmate's pet builds *their* profile in `/vantage
+  roster`, instead of being dropped.
 
 ## v0.11.0 — the community update
 
