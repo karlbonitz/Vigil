@@ -41,6 +41,7 @@ Modules\Auras.lua
 Modules\Parse.lua
 Modules\ParseExport.lua
 Modules\Contribute.lua
+Modules\IntelPack.lua
 Modules\Inspect.lua
 Modules\Briefing.lua
 Modules\Options.lua

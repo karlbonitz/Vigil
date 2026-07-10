@@ -107,6 +107,29 @@ function M:IsConfirmed(spellID, spellName)
     return false
 end
 
+-- Add an entry from an IMPORTED Intel Pack (see Modules/IntelPack.lua). Like Note
+-- but with no combat gates: it ignores the learn toggle (importing is deliberate),
+-- banks no evidence, and does NOT mark the cast locally-confirmed (you didn't see
+-- it kicked). Curated/community always win; an already-known cast is skipped.
+-- Returns true only when it adds a NEW entry.
+function M:Import(spellName, spellID, zone)
+    if type(spellName) ~= "string" or spellName == "" then return false end
+    local key = spellName:lower()
+    local K = Vantage.Kickable
+    if K and (K.byName[key] or (spellID and K.byID[spellID])) then return false end
+    local d = store()
+    if d.spells[key] then return false end
+    if d.count >= CAP and pruneOldest(d.spells) then d.count = d.count - 1 end
+    local now = (GetTime and GetTime()) or 0
+    d.spells[key] = {
+        name = spellName, id = spellID, n = 1, first = now, last = now, zone = zone,
+        interruptible = true, learned = true, imported = true,
+        priority = 2, category = "learned", castTime = 0,
+    }
+    d.count = d.count + 1
+    return true
+end
+
 function M:OnEnable()
     store() -- make sure the table exists on login, before the first interrupt
 end

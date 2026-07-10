@@ -200,6 +200,10 @@ SlashCmdList["VANTAGE"] = function(msg)
         if Vantage.ParseExport then Vantage.ParseExport:Toggle() end
     elseif cmd == "contribute" or cmd == "intel" then
         if Vantage.Contribute then Vantage.Contribute:Toggle() end
+    elseif cmd == "share" then
+        if Vantage.IntelPack then Vantage.IntelPack:ShowExport() end
+    elseif cmd == "import" then
+        if Vantage.IntelPack then Vantage.IntelPack:ShowImport() end
     elseif cmd == "brief" then
         if Vantage.Briefing then Vantage.Briefing:Brief(true) end
     elseif cmd == "party" then

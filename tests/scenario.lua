@@ -664,6 +664,28 @@ H.Advance(0.3)
 ok(oA.kickF:IsShown(), "with prioritization off, every kickable cast shouts")
 Vantage.db.kickPriority = true
 
+-- 12c. Shareable Intel Packs: export self-learned kicks to a string; import merges
+-- (curated/community always win; garbage is rejected).
+Vantage.db.learn = true
+Vantage.Learn:Import("Shared Test Cast", 990002, "Auchindoun")  -- seed a learned entry
+local packStr = Vantage.IntelPack:BuildString()
+ok(packStr:find("^VTGPACK1"), "pack string carries the header")
+ok(packStr:find("Shared Test Cast", 1, true) ~= nil, "pack string includes a learned cast")
+VantageLearnedDB.spells["shared test cast"] = nil   -- forget it locally
+VantageLearnedDB.count = VantageLearnedDB.count - 1
+ok(Vantage.GetKickInfo("Shared Test Cast", 990002) == nil, "cast is unknown before import")
+local added, skipped, okFlag = Vantage.IntelPack:Import(packStr)
+ok(okFlag and added >= 1, "import parsed the header and added at least one cast")
+local gi = Vantage.GetKickInfo("Shared Test Cast", 990002)
+ok(gi and gi.interruptible == true, "imported cast now resolves as kickable")
+local a2 = Vantage.IntelPack:Import(packStr)
+eq(a2, 0, "re-importing an already-known pack adds nothing (idempotent)")
+Vantage.IntelPack:Import("VTGPACK1;44201~Tranquility~Karazhan")  -- try to import a curated padlock
+local tq = Vantage.GetKickInfo("Tranquility")
+ok(tq and tq.interruptible == false, "import never overrides a curated padlock")
+local _, _, badok = Vantage.IntelPack:Import("not a pack string")
+ok(badok == false, "garbage input is rejected, not merged")
+
 -- 13. Options interactions: toggle every checkbox + run reset
 for _, f in ipairs(H.frames) do
     if f.__kind == "CheckButton" and f.__scripts.OnClick then
