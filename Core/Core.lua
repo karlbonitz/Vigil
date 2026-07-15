@@ -1,6 +1,7 @@
 -- Vantage/Core/Core.lua
 -- The spine: a tiny event bus, a module registry, SavedVariables, the sound
--- helper, the slash command, and login bootstrapping. No external libraries.
+-- helper, the slash command, and login bootstrapping. Pure Blizzard API — the
+-- one embedded library (LibThreatClassic2) is used only by ThreatEst.
 local addonName, Vantage = ...
 
 -- ===========================================================================
@@ -143,7 +144,7 @@ Vantage:RegisterEvent("PLAYER_LOGIN", function()
     if not prev then
         Vantage:Print("First time? Make sure enemy nameplates are ON (default key |cffffd100V|r), then target any enemy and type |cffffd100/vantage test|r to see the interrupt cue fire.")
     elseif prev ~= Vantage.version then
-        Vantage:Print(("Updated |cffffd100%s -> %s|r. New: |cffffd100/vantage contribute|r shares the kicks Vantage taught itself with the whole community (anonymous) — so everyone's game gets smarter together.")
+        Vantage:Print(("Updated |cffffd100%s -> %s|r. New: when a pack all casts at once, the cue now shouts for the one that matters most; |cffffd100/vantage share|r hands your self-taught kicks to a friend; |cffffd100/vantage kicks|r reads out the party's ready interrupts.")
             :format(prev, Vantage.version))
     end
 end)
