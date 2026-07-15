@@ -13,9 +13,10 @@
 - **Sharper timing.** A cast Vantage picks up already in progress shows its *true*
   remaining time instead of over-counting, and a cast already too far gone to kick
   shows the glow but holds the alert — a beep you can't act on is just noise.
-- **Real threat.** The amber "about to pull" warning now reads actual threat from an
-  embedded **LibThreatClassic2** (the 2.5.x native threat API is unreliable), and
-  falls back to Vantage's own estimate when the library isn't present.
+- **Real threat.** The amber "about to pull" warning now reads your actual threat
+  percentage from the client's own threat API, falling back to Vantage's damage
+  estimate when there's no threat data. Vantage stays dependency-free — pure
+  Blizzard API, no libraries.
 - **Cleaner threat display.** The aggro strip under the bar now shows only on your
   current target — on every other plate the border already carries the threat color,
   so the redundant "line under the bar" is gone.

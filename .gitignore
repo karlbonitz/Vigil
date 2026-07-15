@@ -6,6 +6,6 @@ Thumbs.db
 # packager local dry-run output
 .release/
 
-# Embedded libraries are fetched by the packager (.pkgmeta externals). A local
-# clone for in-game testing can live in Libs/, but it's never committed.
+# Vantage has no libraries (see .pkgmeta). Kept so a stray Libs/ from an old
+# checkout can never sneak into a commit.
 Libs/

@@ -376,13 +376,20 @@ ok(o.castbar.endTime - H.now < 0.5, "in-progress cast shows true remaining, not 
 ok(o.kickF:IsShown(), "late kickable cast still shows the glow")
 eq(H.sounds, sPre, "late cast holds the alert (un-kickable in the reaction window)")
 
--- 6h. Real threat via the embedded LibThreatClassic2 (stubbed here): the amber
--- "about to pull" tier uses actual threat % instead of the damage-tally estimate.
+-- 6h. Real threat from the client's OWN threat API: the amber "about to pull" tier
+-- uses actual threat % instead of the damage-tally estimate.
 local TE = Vantage.ThreatEst
 Vantage.db.threatAmber = true
 local mob = H.units.nameplate1
 mob.threat = nil
-ok(TE:Situation("nameplate1") == nil, "no library data -> Situation nil (damage estimate takes over)")
+ok(TE:Situation("nameplate1") == nil, "no threat relationship -> Situation nil (damage estimate takes over)")
+-- The trap that made us wrongly condemn this API (see ThreatEst:Situation): a mob
+-- you're engaged with but haven't damaged reads a LIVE ZERO, not nil. 0 is truthy
+-- in Lua, so gating on `status` would paint every untouched mob as aggro.
+mob.threat = { isTanking = false, status = 0, pct = 0 }
+local _, zStatus, zPct = TE:Situation("nameplate1")
+ok(zStatus == 0 and zPct == 0, "a live zero reading is DATA, not 'no data'")
+ok(not TE:Closing("nameplate1"), "engaged but zero threat -> NOT closing (0 is truthy — don't gate on status)")
 mob.threat = { isTanking = false, status = 0, pct = 85 }
 ok(TE:Closing("nameplate1"), "DPS at 85% of the pull threshold -> closing (amber)")
 mob.threat = { isTanking = false, status = 0, pct = 40 }

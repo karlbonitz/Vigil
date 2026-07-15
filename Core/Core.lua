@@ -1,7 +1,6 @@
 -- Vantage/Core/Core.lua
 -- The spine: a tiny event bus, a module registry, SavedVariables, the sound
--- helper, the slash command, and login bootstrapping. Pure Blizzard API — the
--- one embedded library (LibThreatClassic2) is used only by ThreatEst.
+-- helper, the slash command, and login bootstrapping. No external libraries.
 local addonName, Vantage = ...
 
 -- ===========================================================================

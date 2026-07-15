@@ -373,33 +373,25 @@ function UnitIsFriend(_, t) local u = U(t); return u and not u.hostile end
 function UnitAffectingCombat(t) local u = U(t); return (u and u.inCombat) or false end
 function UnitIsTapDenied() return false end
 
--- threat: driven by unit.threat = {isTanking, status, pct} (nil = no table)
+-- threat: the client's OWN API, driven by unit.threat = {isTanking, status, pct}.
+--
+-- This models the REAL 2.5.6 contract, verified in-game 2026-07-15 — don't
+-- "simplify" it. A unit with no threat relationship (a friendly, an unengaged mob)
+-- returns all nils. A mob you ARE on the threat table of returns real numbers, and
+-- "engaged but no threat yet" is a live (false, 0, 0, 0, 0) — ZEROS, not nils.
+-- That distinction is load-bearing: 0 is truthy in Lua, so gating on `status`
+-- reads every untouched mob as aggro. Model no-threat-yet with
+-- threat = { isTanking = false, status = 0, pct = 0 }, and no-relationship with
+-- threat = nil.
+--
+-- History worth keeping: this file used to ALSO fake a LibThreatClassic2 via
+-- LibStub. That stub is why CI was green while the real library — Classic-Era-only
+-- — never loaded in-game at all. A stub that lies about a contract buys nothing.
 function UnitDetailedThreatSituation(_, t)
     local u = U(t)
     local th = u and u.threat
     if not th then return nil end
-    return th.isTanking or false, th.status, th.pct
-end
-
--- LibStub + a LibThreatClassic2 stub for Vantage's embedded-threat wiring. The lib
--- method reads the SAME unit.threat table the native stub does, so a scenario drives
--- both through one control. (In-game these come from the packaged Libs/.)
-local _libstub = {}
-LibStub = setmetatable({
-    NewLibrary = function(_, n) _libstub[n] = _libstub[n] or {}; return _libstub[n] end,
-    GetLibrary = function(_, n) return _libstub[n] end,
-}, { __call = function(_, n) return _libstub[n] end })
-do
-    local tl = LibStub:NewLibrary("LibThreatClassic2", 1)
-    function tl:UnitDetailedThreatSituation(_, mob)
-        local u = U(mob)
-        local th = u and u.threat
-        -- Match the real lib's contract: a mob you have NO threat on returns
-        -- status 0 (not nil) with pct nil — NOT an all-nil result. A bare nil here
-        -- masked the "status is never nil" bug in ThreatEst:Situation.
-        if not th then return false, 0, nil, nil, 0 end
-        return th.isTanking or false, th.status, th.pct, th.pct, th.value or 0
-    end
+    return th.isTanking or false, th.status, th.pct, th.pct, th.value or 0
 end
 
 function UnitCastingInfo(t)

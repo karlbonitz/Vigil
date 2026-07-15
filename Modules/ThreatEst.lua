@@ -59,20 +59,27 @@ local function onCLEU()
     t[srcGUID] = (t[srcGUID] or 0) + amount
 end
 
--- Your (isTanking, status, pct) on `unit` from LibThreatClassic2, or nil if the
--- library isn't embedded or has no data for this mob yet. pct = % of the pull
--- threshold (100 = you'd pull); status 3/2 = tanking (secure/insecure), 1 = above
--- the tank but not tanking, 0 = below.
+-- Your (isTanking, status, pct) on `unit` from the client's OWN threat API, or nil
+-- when it has no threat relationship to report. pct = % of the pull threshold
+-- (100 = you'd pull); status 3/2 = tanking (secure/insecure), 1 = above the tank
+-- but not tanking, 0 = below.
 --
--- NB: for a mob you have NO threat on, LibThreatClassic2 returns status = 0 (NOT
--- nil, despite its own doc comment) with pct = nil — so `pct` is the real "no data"
--- sentinel. Gating on status would treat every no-threat mob as live data (status
--- 0) and dead-end the damage-tally fallback in Closing/RivalClosing, which only
--- runs when this returns nil.
+-- The 2.5.x native API works. We wrongly wrote it off as broken ("reports aggro on
+-- everything") and embedded LibThreatClassic2 to replace it — but that library
+-- hard-returns on any client that isn't Classic Era (WOW_PROJECT_CLASSIC), so it
+-- never loaded here at all, and the amber tier silently ran on the damage estimate
+-- for its entire life. Verified in-game on 2.5.6 (2026-07-15): a mob you haven't
+-- damaged reads (false, 0, 0, 0, 0), and pct climbs as your threat does.
+--
+-- NB, and this is what burned us: a live "no threat" reading is a real ZERO, not a
+-- nil — and 0 is TRUTHY in Lua, so `if status then` treats every untouched mob as
+-- aggro. That is almost certainly the "aggro on everything" we blamed the client
+-- for. Only a unit with no threat relationship at all (a friendly, an unengaged
+-- mob) returns nil, so `pct == nil` is the one honest "no data" sentinel — never
+-- gate on `status`.
 function M:Situation(unit)
-    local lib = self.threatLib
-    if not lib then return nil end
-    local isTanking, status, pct = lib:UnitDetailedThreatSituation("player", unit)
+    if not UnitDetailedThreatSituation then return nil end
+    local isTanking, status, pct = UnitDetailedThreatSituation("player", unit)
     if pct == nil then return nil end
     return isTanking, status, pct
 end
@@ -122,10 +129,8 @@ end
 
 function M:OnEnable()
     myGUID = UnitGUID("player")
-    -- Real threat when LibThreatClassic2 is embedded (see .pkgmeta / the TOC). The
-    -- native 2.5.x threat API is unreliable, so the amber tier prefers the library
-    -- and only falls back to the damage estimate below when it isn't present.
-    self.threatLib = LibStub and LibStub("LibThreatClassic2", true)
+    -- The amber tier prefers real threat from Situation() above; the damage tally
+    -- below is the fallback for units the client reports no threat data for.
     Vantage:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", onCLEU)
     Vantage:RegisterEvent("PLAYER_REGEN_ENABLED", wipeTallies) -- fresh book per combat
     Vantage:RegisterEvent("PLAYER_ENTERING_WORLD", wipeTallies)

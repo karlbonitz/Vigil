@@ -20,10 +20,9 @@ groupmates' interrupts from the combat log — nobody else needs the addon —
 and when a kickable cast is up while *your* stop is down, the cue quietly
 names whose interrupt is ready. And the plates answer "whose problem is
 this?": bright red = it's coming for you, cool slate = the tank has it, and
-**amber = you're closing in on pulling it** — read from real threat percentages
-via an embedded LibThreatClassic2, because the client's own threat API is
-broken, with a group-damage estimate as the fallback when the library isn't
-there. Late, never spammy.
+**amber = you're closing in on pulling it** — read from your real threat
+percentage via the client's own threat API, with a group-damage estimate as the
+fallback when there's no threat data. Late, never spammy.
 
 And Vantage **teaches itself**. The curated pack can't know every cast in every
 instance, so any time Vantage watches a cast get interrupted — yours or a
@@ -58,9 +57,7 @@ the same skin when Blizzard shows them. Every piece is configurable from the
 options panel (`/vantage`), and the defaults are tuned to look great with zero
 setup.
 
-> Nearly dependency-free — the one embedded library is LibThreatClassic2 (for
-> reliable threat on 2.5.x, where the native API isn't); everything else is pure
-> WoW API, so it still loads fast.
+> Dependency-free — no libraries at all, just pure WoW API, so it loads fast.
 
 ## Install
 
@@ -144,13 +141,12 @@ You can also reach the options panel from **Esc → Options → AddOns → Vanta
   *your* interrupt (hard kick **or** soft Fear/Silence/Shackle/Stun) is ready. So
   the hero feature is useful in arenas, battlegrounds, and world PvP at any level,
   not just in dungeons. Toggle with `/vantage pvp` (on by default).
-- **Threat color comes from ground truth, not the native API.** Red/slate aggro
-  reads the mob's *actual target* — the 2.5.x native threat table is unreliable
-  (it reported "you have aggro" for everything in a real 5-man) and is never
-  consulted. The predictive amber "about to pull" tier reads real threat
-  percentages from the embedded **LibThreatClassic2**, falling back to a
-  group-damage estimate when the library isn't present (as in a source
-  checkout). The interrupt cue depends on none of it.
+- **Threat color comes from ground truth; amber comes from the threat API.**
+  Red/slate aggro reads the mob's *actual target* — unambiguous and free. The
+  predictive amber "about to pull" tier reads your real threat percentage from
+  the client's own threat API (`UnitDetailedThreatSituation`), falling back to a
+  group-damage estimate when there's no threat data. The interrupt cue depends on
+  none of it.
 
 ### Known limitations / TODO
 - Cast detection currently leans on the combat log + live cast API; very short
@@ -193,9 +189,6 @@ Vantage/
     Inspect.lua             /vantage plate — dev tool: dumps a plate's frame tree
     Briefing.lua            the dungeon kick sheet, printed on zone-in
     Options.lua             native options panel (sections, sliders, reset)
-  Libs/
-    LibThreatClassic2/      real threat on 2.5.x — fetched by the packager at
-                            build time (gitignored; absent from a source checkout)
   docs/
     index.html              the Vantage Parse web report (served by GitHub Pages)
   collector/                self-hosted community-intel backend (Node + SQLite + admin dashboard)
@@ -227,8 +220,8 @@ no server ever sees. Nothing is uploaded anywhere.
   together and new players inherit the lot on day one.
 - **v0.12 — sharper cues** — ✅ shareable **Intel Pack** strings (`/vantage share`
   / `/vantage import`), ✅ group coordination (`/vantage announce`,
-  `/vantage kicks`), ✅ prioritized multi-cast cue, ✅ real threat via an embedded
-  LibThreatClassic2, ✅ community trust gradient + diminishing-returns awareness,
+  `/vantage kicks`), ✅ prioritized multi-cast cue, ✅ real threat from the
+  client's own API, ✅ community trust gradient + diminishing-returns awareness,
   ✅ pet interrupts credit their owner.
 - **Still open** — an "intel-only consumer" mode so Plater users can adopt the
   kick intelligence without switching nameplates; curated packs for ZA / Hyjal /

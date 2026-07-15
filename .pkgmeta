@@ -20,9 +20,6 @@ ignore:
   - NEXT_STEPS.md
   - .github
 
-# LibThreatClassic2 gives real threat on 2.5.x (the native threat API is unreliable
-# there). Its lib.xml is self-contained — it bundles its own LibStub, CallbackHandler
-# and Ace libraries — so this one external is all we need; the packager fetches it
-# into Libs/ at build time and the TOC loads Libs\LibThreatClassic2\lib.xml.
-externals:
-  Libs/LibThreatClassic2: https://github.com/dfherr/LibThreatClassic2
+# No externals: Vantage is pure Blizzard API. (We briefly embedded
+# LibThreatClassic2 for threat — it turned out to be Classic-Era-only and never
+# loaded on 2.5.x, and the client's own threat API works fine. See ThreatEst.lua.)

@@ -12,12 +12,6 @@
 ## X-Curse-Project-ID: 1602039
 ## X-Wago-ID: qKQm2EKx
 
-# --- Embedded library: real threat on 2.5.x (fetched by the packager; see .pkgmeta).
-#     Self-contained (bundles its own LibStub/CallbackHandler/Ace). Absent from a
-#     plain source checkout — Threat then falls back to its own estimate — so this
-#     line is optional at load time. ---
-Libs\LibThreatClassic2\lib.xml
-
 # --- Core (load first; defines the namespace, event bus, DB, slash commands) ---
 Core\Util.lua
 Core\Core.lua

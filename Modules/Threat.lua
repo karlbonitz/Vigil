@@ -5,14 +5,19 @@
 --
 --   1. SOLO, threat says NOTHING. Everything you fight is on you — painting
 --      it red is a tautology. The display only speaks in a group.
---   2. Color comes from GROUND TRUTH only: the mob's actual target
---      (unit.."target" — the standard classic tank-plate technique). The
---      2.5.x native threat table is NOT consulted at all: it returned
---      "you have aggro" for everything in a real 5-man (2026-07-03),
---      exactly the unreliability our research predicted. The predictive
---      amber "about to pull" tier comes from ThreatEst instead: real threat
---      percentages off the embedded LibThreatClassic2, falling back to a
---      combat-log damage estimate when the library isn't there.
+--   2. Red/slate color comes from GROUND TRUTH: the mob's actual target
+--      (unit.."target" — the standard classic tank-plate technique). It's
+--      unambiguous and free, so it stays. The predictive amber "about to
+--      pull" tier comes from ThreatEst, which reads the client's own threat
+--      API, with a combat-log damage estimate as the fallback.
+--
+--      CORRECTION (2026-07-15): this comment used to say the native threat
+--      table "returned 'you have aggro' for everything in a real 5-man
+--      (2026-07-03)" and was never consulted. That verdict was wrong. The
+--      API works on 2.5.6 — a no-threat reading is a real 0, and 0 is truthy
+--      in Lua, which produces exactly that symptom from our own code. The
+--      library we embedded to replace it was Classic-Era-only and never even
+--      loaded. See the NB in ThreatEst:Situation.
 local addonName, Vantage = ...
 local M = Vantage:NewModule("Threat")
 
