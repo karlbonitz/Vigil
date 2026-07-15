@@ -49,6 +49,10 @@ even your pet and stance — and lights up the plate the moment acting matters:
   *is* ready. `/vantage kicks` reads out the party's available stops on demand,
   and `/vantage announce` (opt-in, throttled) calls your interrupts to party chat
   so nobody doubles up.
+- 🎚️ **Whose problem is this?** In a group, the plates answer at a glance: bright
+  red = it's coming for you, cool slate = the tank has it, and amber = you're
+  closing in on pulling it off them — read from your actual threat, not a guess.
+  Late and rare by design: when amber lights up, ease off.
 - 🛑 **Every class, not just kickers.** No hard interrupt? Vantage offers your
   real answer instead — `FEAR`, `STUN`, `SILENCE`, `SHACKLE` — and it checks
   target immunities *and* diminishing returns first, so it never tells you to
